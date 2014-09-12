@@ -92,8 +92,7 @@ class SOSFilter(signal.lti):
             (2 * numpy.pi)**(len(self.poles) - len(self.zeros)) * self.gain)
 
     def sresp(self, f):
-        """
-        Returns the S-domain frequency response of LTI at f (in Hz)
+        """Returns the S-domain frequency response of LTI at f (in Hz)
 
         Parameters
         ----------
@@ -102,31 +101,24 @@ class SOSFilter(signal.lti):
 
         Returns
         -------
-        h : `complex`
+        h : `numpy.ndarray` of `complex`
             S-domain frequency response of LTI at f (in Hz)
 
         Notes
         -----
-        Mat Evans' Matlab code: sresp.m
+        Matt Evans's Matlab code: sresp.m
         """
-
-        f = numpy.atleast_1d(f)
-
-        # create new LTI object with flipped signs (following ME's code)
-        lti = signal.lti(-self.zeros, -self.poles, self.gain)
-
-        b = lti.num;
-        a = lti.den;
-
-        h = numpy.polyval(b, 1j*f)/numpy.polyval(a, 1j*f)
+        # compute frequency response with flipped signs
+        _, h = signal.freqresp((-self.zeros, -self.poles, self.gain),
+                               w=numpy.atleast_1d(f))
 
         # check for infinities
-        if len(lti.poles > len(lti.zeros)):
-            h[numpy.where(f==numpy.Inf)] = 0
-        elif len(lti.poles < len(lti.zeros)):
-            h[numpy.where(f==numpy.Inf)] = numpy.Inf # not sure about this
+        if len(self.poles) > len(self.zeros):
+            h[numpy.where(f == numpy.Inf)] = 0
+        elif len(self.poles) < len(self.zeros):
+            h[numpy.where(f == numpy.Inf)] = numpy.Inf
         else:
-            h[numpy.where(f==numpy.Inf)] = lti.gain
+            h[numpy.where(f == numpy.Inf)] = self.gain
 
         return h
 
