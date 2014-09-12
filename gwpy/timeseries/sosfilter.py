@@ -449,13 +449,7 @@ def ztransform(rs):
 
 
 def cplxpair(x, tol=None):
-    """
-    Sort numbers into complex conjugate pairs. [used in getSOS]
-
-    rearranges the elements of X so that complex numbers are collected
-    into matched pairs of complex conjugates. The pairs are ordered by
-    increasing real part. Any purely real elements are placed after all
-    the complex pairs.
+    """Sort numbers into complex conjugate pairs
 
     Parameters
     ----------
@@ -470,17 +464,17 @@ def cplxpair(x, tol=None):
     Notes
     -----
     Matlab code: cplxpair.m (not copied! recreated)
+
+    Can remove this function when :meth:`filter_design._cplxpair` is
+    available in `scipy.signal`.
     """
     x = numpy.atleast_1d(x)
 
     if x.size == 0:
-        # if x is empty, don't do anything
-        xsorted = x
+        return x
     else:
         # get tolerance
-        tol = tol or 100 * numpy.spacing(1)
-        # I'm not sure this is the right way to replicate:
-        # tol = 100*eps(class(x))
+        tol = 100 * numpy.finfo((1.0 * x).dtype).eps
 
         x = x.flatten()
 
@@ -492,25 +486,24 @@ def cplxpair(x, tol=None):
         xc = [xci for (xi, xci) in sorted(zip(xc_posim, xc))]
         xc = numpy.array(xc)
 
-
         if xc.size == 0:
             # no complex numbers, just return reals
             xsorted = xr
         elif numpy.mod(len(xc), 2) == 1:
             # there's an odd number of complex elements
-            raise Exception('Complex numbers cannot be paired: odd number.')
+            raise ValueError('Complex numbers cannot be paired: odd number.')
         else:
             # check pairs of conjugates
             xcpairs = numpy.reshape(xc, (len(xc)/2, 2))
             for pair in xcpairs:
                 realdif = pair[0].real - pair[1].real
-                if realdif > tol*abs(pair[0].real):
-                    raise Exception('Complex numbers cannot be paired: '
-                                    'not in conjugate pairs (Re).')
+                if realdif > tol * abs(pair[0].real):
+                    raise ValueError('Complex numbers cannot be paired: '
+                                     'not in conjugate pairs (Re).')
                 imagsum = pair[0].imag + pair[1].imag
-                if imagsum > tol*abs(pair[0].real):
-                    raise Exception('Complex numbers cannot be paired: '
-                                    'not in conjugate pairs (Im).')
+                if imagsum > tol * abs(pair[0].real):
+                    raise ValueError('Complex numbers cannot be paired: '
+                                     'not in conjugate pairs (Im).')
 
             xsorted = numpy.append(xc, xr)
 
