@@ -369,14 +369,13 @@ class SOSFilter(signal.lti):
         sos[0][:3] = k * sos[0][:3]
         return sos
 
-    def zfilt(self, x, fs, *args):
-        """
-        Filters x (with sample frequency fs) to produce y
+    def filter(self, x, fs, fp=None, axis=-1):
+        """Apply this `SOSFilter` to ``x``
 
         Parameters
         ----------
         x : `numpy.ndarray`
-            Time series to be filtered.
+            data to be filtered
         fs : `float`, `numpy.ndarray`
             sample frequency in Hz.
 
@@ -387,12 +386,12 @@ class SOSFilter(signal.lti):
 
         Notes
         -----
-        Matt Evans' Matlab code: zfilt.m
+        Matt Evans's Matlab code: zfilt.m
         """
-        sos = self.get_sos(fs, *args)
+        sos = self.get_sos(fs, fp=fp)
         y = x
         for row in sos:
-            y = signal.lfilter(row[:3], row[3:], y, axis=0)
+            y = signal.lfilter(row[:3], row[3:], y, axis=axis)
         return y
 
 

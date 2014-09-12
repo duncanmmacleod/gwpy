@@ -957,7 +957,7 @@ class TimeSeries(Series):
             the filtered version of the input `TimeSeries`
         """
         lti = SOSFilter(*filt)
-        new = lti.zfilt(self.data, self.sample_rate.value).view(type(self))
+        new = lti.filter(self.data, self.sample_rate.value).view(type(self))
         new.metadata = self.metadata.copy()
         return new
 
