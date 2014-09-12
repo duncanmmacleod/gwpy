@@ -62,6 +62,7 @@ from ..time import Time
 from ..window import *
 from ..utils import (gprint, update_docstrings, with_import)
 from . import common
+from .sosfilter import SOSFilter
 
 __author__ = 'Duncan Macleod <duncan.macleod@ligo.org>'
 __version__ = version.version
@@ -930,6 +931,33 @@ class TimeSeries(Series):
             else:
                 a = 1.0
         new = signal.lfilter(b, a, self, axis=0).view(self.__class__)
+        new.metadata = self.metadata.copy()
+        return new
+
+    def filter_sos(self, *filt):
+        """Apply the given filter to this `TimeSeries`.
+
+        Recognised filter arguments are converted into the standard
+        ``(numerator, denominator)`` representation before being applied
+        to this `TimeSeries`.
+
+        Parameters
+        ----------
+        *filt
+            one of:
+
+            - :class:`scipy.signal.lti`
+            - ``(numerator, denominator)`` polynomials
+            - ``(zeros, poles, gain)``
+            - ``(A, B, C, D)`` 'state-space' representation
+
+        Returns
+        -------
+        result : `TimeSeries`
+            the filtered version of the input `TimeSeries`
+        """
+        lti = SOSFilter(*filt)
+        new = lti.zfilt(self.data, self.sample_rate.value).view(type(self))
         new.metadata = self.metadata.copy()
         return new
 
