@@ -187,14 +187,15 @@ class SOSFilter(signal.lti):
 
         return zz, pz, kz
 
-    def getSOS(self, fs, *args):
-        """
-        Returns SOSFilter in second-order-sections for use in real-time filtering.
+    def get_sos(self, fs, fp=None):
+        """Returns array of second-order sections for real-time filtering
 
         Parameters
         ----------
         fs : `float`, `numpy.ndarray`
             sample frequency in Hz.
+        fp : `float`
+            pre-warping match frequency (Hz)
 
         Returns
         -------
@@ -205,35 +206,30 @@ class SOSFilter(signal.lti):
         -----
         Matt Evans' Matlab code: getSOS.m
         """
-        z, p, k = self.get_zpk_z(fs, *args)
+        # get ZPK in z-domain
+        z, p, k = self.get_zpk_z(fs, fp=None)
 
-        # Matlab's zp2sos
-        # ---------------
-
-        # (0) Set default values
-        #direction_flag = 'up'
-        #scale = 'none'
-        #krzflag = False
-
-        # (1) Order the poles and zeros in complex conj. pairs
         # and return the number of poles and zeros
         z = cplxpair(z)
         p = cplxpair(p)
 
         lz = len(z)
         lp = len(p)
-        l = int(numpy.ceil(lp/2))
 
-        if lz > lp: raise Exception('Too many zeros.')
+        if lz > lp:
+            raise ValueError('Too many zeros.')
 
-        # (2) Break up conjugate pairs and real poles and zeros
-        p_conj = p[numpy.where(p.imag!=0)] # poles that are conjugate pairs
-        p_real = p[numpy.where(p.imag==0)] # poles that are real
+        # poles that are conjugate pairs
+        p_conj = p[numpy.where(p.imag != 0)]
+        # poles that are real
+        p_real = p[numpy.where(p.imag == 0)]
 
-        z_conj = z[numpy.where(z.imag!=0)] # zeros that are conjugate pairs
-        z_real = z[numpy.where(z.imag==0)] # zeros that are real
+        # zeros that are conjugate pairs
+        z_conj = z[numpy.where(z.imag != 0)]
+        # zeros that are real
+        z_real = z[numpy.where(z.imag == 0)]
 
-        # (3) Order poles according to proximity to unit circle
+        # order poles according to proximity to unit circle
         dist_c = abs(p_conj - p_conj/abs(p_conj))
         p_conj = numpy.array([pc for (d, pc) in sorted(zip(dist_c, p_conj))])
 
@@ -242,25 +238,29 @@ class SOSFilter(signal.lti):
 
         new_p = numpy.append(p_conj, p_real)
 
-        # (4) Order zeros according to proximity to pole pairs
+        # order zeros according to proximity to pole pairs
         new_z = []
         zc_pool = list(z_conj)
         zr_pool = list(z_real)
         pc_pool = list(p_conj)
         pr_pool = list(p_real)
-        def dist(p): return lambda z: abs(z - p)
+
+        def dist(p):
+            """Return distance of ``p`` from ``z``
+            """
+            return lambda z: abs(z - p)
 
         # order complex zero pairs
         for i in range(len(z_conj)/2):
             if pc_pool:
                 # there are conjugate pole pairs left
-                zc_pool = sorted(zc_pool, key = dist(pc_pool.pop(0)))
+                zc_pool = sorted(zc_pool, key=dist(pc_pool.pop(0)))
                 new_z += [zc_pool.pop(0)]
-                zc_pool = sorted(zc_pool, key = dist(pc_pool.pop(1)))
+                zc_pool = sorted(zc_pool, key=dist(pc_pool.pop(1)))
                 new_z += [zc_pool.pop(0)]
             elif pr_pool:
                 # there are real poles left
-                zc_pool = sorted(zc_pool, key = dist(pr_pool.pop(0)))
+                zc_pool = sorted(zc_pool, key=dist(pr_pool.pop(0)))
                 new_z += [zc_pool.pop(0), zc_pool.pop(0)]
                 if pr_pool: del pr_pool[0]
             else:
@@ -271,11 +271,11 @@ class SOSFilter(signal.lti):
         for i in range(len(z_real)):
             if pc_pool:
                 # there are conjugate pole pairs left
-                zr_pool = sorted(zr_pool, key = dist(pc_pool.pop(0)))
+                zr_pool = sorted(zr_pool, key=dist(pc_pool.pop(0)))
                 new_z += [zr_pool.pop(0)]
             elif pr_pool:
                 # there are real poles left
-                zr_pool = sorted(zr_pool, key = dist(pr_pool.pop(0)))
+                zr_pool = sorted(zr_pool, key=dist(pr_pool.pop(0)))
                 new_z += [zr_pool.pop(0)]
             else:
                 new_z += zr_pool
@@ -285,100 +285,88 @@ class SOSFilter(signal.lti):
 
         # (5) Form SOS matrix
         sos = []
+        # if no zeros
         if lz == 0:
-            #print "no zeros"
+            # no poles
             if lp == 0:
-                ##print "no poles"
                 sos = [1, 0, 0, 1, 0, 0]
+            # even number of poles
             elif lp % 2 == 0:
-                #print "even number of poles"
                 new_p2 = numpy.reshape(new_p, (lp/2, 2))
-                for np_pair in new_p2:
+                for np_pair in new_p2[::-1]:
                     lti = signal.lti([], np_pair, 1)
-                    sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                    sos.append(numpy.concatenate((lti.num, lti.den)))
+            # odd number of poles
             else:
-                #print "odd number of poles"
                 new_p2 = numpy.reshape(new_p[:-1], ((lp-1)/2, 2))
-                for np_pair in new_p2:
+                for np_pair in new_p2[::-1]:
                     lti = signal.lti([], np_pair, 1)
-                    sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                    sos.append(numpy.concatenate((lti.num, lti.den)))
                 # handle last pole separately
                 lti = signal.lti([], new_p[-1], 1)
-                sos = [numpy.concatenate((lti.num, [0], lti.den, [0]))] + sos
+                sos.insert(0, numpy.concatenate((lti.num, [0], lti.den, [0])))
         else:
+            # even number of zeros
             if lz % 2 == 0:
-                #print "even number of zeros" , lz
-                # handle first lz poles
                 new_z2 = numpy.reshape(new_z, (lz/2, 2))
                 new_p2 = numpy.reshape(new_p[:lz], (lz/2, 2))
-                for (zpair, ppair) in zip(new_z2, new_p2):
+                for zpair, ppair in zip(new_z2, new_p2)[::-1]:
                     lti = signal.lti(zpair, ppair, 1)
-                    sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                    sos.append(numpy.concatenate((lti.num, lti.den)))
                 # continue for remaining poles if any
                 if not numpy.mod(lp, 2):
                     #print "even number of poles"
                     new_p2 = numpy.reshape(new_p[lz:], ((lp-lz)/2, 2))
-                    for np_pair in new_p2:
+                    for np_pair in new_p2[::-1]:
                         lti = signal.lti([], np_pair, 1)
-                        sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                        sos.append(numpy.concatenate((lti.num, lti.den)))
                 else:
                     #print "odd number of poles"
                     new_p2 = numpy.reshape(new_p[lz:-1], ((lp-lz-1)/2, 2))
-                    for np_pair in new_p2:
+                    for np_pair in new_p2[::-1]:
                         lti = signal.lti([], np_pair, 1)
-                        sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                        sos.append(numpy.concatenate((lti.num, lti.den)))
                     # handle last pole separately
                     lti = signal.lti([], new_p[-1], 1)
-                    sos = [numpy.concatenate((lti.num, [0], lti.den, [0]))] + sos
+                    sos.insert(0,
+                               numpy.concatenate((lti.num, [0], lti.den, [0])))
+            # odd number of zeros
             else:
-                #print "odd number of zeros"
-                # handle first lz-1 poles
                 new_z2 = numpy.reshape(new_z[:-1], ((lz-1)/2, 2))
                 new_p2 = numpy.reshape(new_p[:(lz-1)], ((lz-1)/2, 2))
-                for (zpair, ppair) in zip(new_z2, new_p2):
+                for zpair, ppair in zip(new_z2, new_p2)[::-1]:
                     lti = signal.lti(zpair, ppair, 1)
-                    sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                    sos.append(numpy.concatenate((lti.num, lti.den)))
                 # handle last zero separately
                 if lz == lp:
-                    #print "same number of poles and zeros"
                     lti = signal.lti(new_z[-1], new_p[-1], 1)
-                    sos = [numpy.concatenate((lti.num, [0], lti.den, [0]))] + sos
+                    sos.insert(0,
+                               numpy.concatenate((lti.num, [0], lti.den, [0])))
+                # more poles than zeros
                 else:
-                    #print "more poles than zeros"
                     lti = signal.lti(new_z[-1], new_p[lz:lz+2], 1)
                     sos = [numpy.concatenate((lti.num, lti.den))] + sos
                     # continue for remaining poles if any
                     if not numpy.mod(lp, 2):
                         # even number of poles
                         new_p2 = numpy.reshape(new_p[lz+1:], ((lp-lz-1)/2, 2))
-                        for np_pair in new_p2:
+                        for np_pair in new_p2[::-1]:
                             lti = signal.lti([], np_pair, 1)
-                            sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                            sos.append(numpy.concatenate((lti.num, lti.den)))
                     else:
                         #print "odd number of poles"
-                        new_p2 = numpy.reshape(new_p[lz+1:-1], ((lp-lz-2)/2, 2))
-                        for np_pair in new_p2:
+                        new_p2 = numpy.reshape(new_p[lz+1:-1],
+                                               ((lp-lz-2)/2, 2))
+                        for np_pair in new_p2[::-1]:
                             lti = signal.lti([], np_pair, 1)
-                            sos = [numpy.concatenate((lti.num, lti.den))] + sos
+                            sos.append(numpy.concatenate((lti.num, lti.den)))
                         # handle last pole separately
                         lti = signal.lti([], new_p[-1], 1)
-                        sos = [numpy.concatenate((lti.num, [0], lti.den, [0]))] + sos
+                        sos.insert(0, numpy.concatenate((lti.num, [0],
+                                                         lti.den, [0])))
 
         sos = numpy.array(sos)
-
-        # (6) Change direction if requested
-        # ['flag' IS 'up' WHEN MATT CALLS THIS, SO I'M SKIPPING THIS STEP]
-
-        # At this point no scaling has been performed
-        # The leading coefficients of both num and den are one.
-
-        # (7) Perform appropriate scaling
-        # ['scale' IS 'none' WHEN MATT CALLS THIS, SO I'M SKIPPING THIS STEP]
-
-        # (8) Embed the gain if only one output argument was specified
-        # [THIS IS ALWAYS TRUE IN OUR CASE]
-        sos[0][0:3] = k * sos[0][0:3]
-
+        sos[0][:3] = k * sos[0][:3]
         return sos
 
     def zfilt(self, x, fs, *args):
@@ -401,7 +389,7 @@ class SOSFilter(signal.lti):
         -----
         Matt Evans' Matlab code: zfilt.m
         """
-        sos = self.getSOS(fs, *args)
+        sos = self.get_sos(fs, *args)
         y = x
         for row in sos:
             y = signal.lfilter(row[:3], row[3:], y, axis=0)
