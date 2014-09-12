@@ -196,6 +196,18 @@ class Spectrum(Series):
             new = self * fresp
             return new
 
+    def filter_sos(self, *filt, **kwargs):
+        from ..timeseries.sosfilter import SOSFilter
+        sos = SOSFilter(*filt)
+        fresp = abs(sos.sresp(self.frequencies))
+        inplace = kwargs.pop('inplace', False)
+        if inplace:
+            self *= fresp
+            return self
+        else:
+            new = self * fresp
+            return new
+
     def filterba(self, *args, **kwargs):
         warnings.warn("filterba will be removed soon, please use "
                       "Spectrum.filter instead, with the same arguments",
