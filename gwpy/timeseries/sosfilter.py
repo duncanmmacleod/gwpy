@@ -122,15 +122,15 @@ class SOSFilter(signal.lti):
 
         return h
 
-    def getZPKz(self, *args):
-        """
-        Get Z-domain zeros and poles. [ok]
+    def get_zpk_z(self, fs, fp=None):
+        """Get Z-domain zeros and poles
 
         Parameters
         ----------
         fs : `float`, `numpy.ndarray`
             sample frequency in Hz
-        fp :
+        fp : `float`
+            pre-warping match frequency (Hz)
 
         Returns
         -------
@@ -149,19 +149,16 @@ class SOSFilter(signal.lti):
         ps = self.poles_s
         ks = self.gain_s
 
-        if len(args)==1:
-            fs = args[0]
-
-            # Pre-warp at each zero/pole (Matt's "mybilinear"):
-            # - transform zeros and poles
+        if fp is None:
+            # transform zeros and poles
             ws = MINUSTWOPI * fs
             zz = ztransform(zs / ws)
             pz = ztransform(ps / ws)
 
-            # - add extra zeros at -1
+            # add extra zeros at -1
             zz = numpy.append(zz, -numpy.ones(len(pz) - len(zz)))
 
-            # - compute gain at a few frequencies
+            # compute gain at a few frequencies
             wsg = 2 * numpy.pi * fs * numpy.logspace(-9, -1, 10)
             wzg = numpy.exp(wsg / fs)
 
@@ -172,27 +169,21 @@ class SOSFilter(signal.lti):
                 kz0.append(abs((wzg[n] - zz).prod() / (wzg[n] - pz).prod()))
 
             kz = numpy.median(ks * numpy.array(ks0) / numpy.array(kz0))
-
-        elif len(args)==2:
-            fs, fp = args
-
+        else:
             # Pre-warp using given match frequency (Matlab's bilinear):
-            fp = 2 * numpy.pi * fp
+            fp *= 2 * numpy.pi
             fs = fp / numpy.tan(fp/(fs*2))
 
-            zs = zs[numpy.isfinite(zs)] # Strip infinities from zeros
-            pz = (1 + ps/fs) / (1 - ps/fs) # Do bilinear transformation
+            # Strip infinities from zeros
+            zs = zs[numpy.isfinite(zs)]
+            # Do bilinear transformation
+            pz = (1 + ps/fs) / (1 - ps/fs)
             zz = (1 + zs/fs) / (1 - zs/fs)
             # [real kz based on Matt's code]
             # (comment in original Matlab function: "real kz or just kz?")
             kz = (ks * (fs-zs).prod() / (fs-ps).prod()).real
             # Add extra zeros at -1
-            zz = numpy.append(zz, -numpy.ones(len(pz) - len(zz)))
-
-            if abs(kz.imag / kz.real) > 1e-10:
-                raise Exception('Imaginary gain factor.')
-        else:
-            raise Exception("getZPKz takes 1 or 2 arguments")
+            zz = numpy.contatenate((zz, -numpy.ones(len(pz) - len(zz))))
 
         return zz, pz, kz
 
@@ -214,7 +205,7 @@ class SOSFilter(signal.lti):
         -----
         Matt Evans' Matlab code: getSOS.m
         """
-        z, p, k = self.getZPKz(fs, *args)
+        z, p, k = self.get_zpk_z(fs, *args)
 
         # Matlab's zp2sos
         # ---------------
