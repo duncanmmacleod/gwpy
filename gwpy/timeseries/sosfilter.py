@@ -23,8 +23,9 @@ import numpy
 
 from scipy import signal
 
-from .. import version
+from astropy.units import (Unit, Hertz, radian, second)
 
+from .. import version
 
 __author__ = 'Max Isi <max.isi@ligo.org>'
 __credits__ = 'Matt Evans'
@@ -35,36 +36,60 @@ MINUSTWOPI = -2 * numpy.pi
 
 class SOSFilter(signal.lti):
     """Filter with application by second-order section.
+
+    Parameters
+    ----------
+    *args :
+        ``args`` should be given as:
+
+        - (numerator, denominator)
+        - (zeros, poles, gain)
+        - (A, B, C, D) : state-space.
+    unit : `str`, `~astropy.units.Unit`, optional
+        unit for critical filter components, default: 'Hertz'.
+        Must be one of 'Hertz' or 'radian/second'.
+
+    Examples
+    --------
+    For example, for a ZPK-format with two zeros at 100 Hz, and two
+    poles at 1 Hz:
+
+        >>> SOSFilter([100, 100], [1, 1], 1)
+
+    Raises
+    ------
+    ValueError
+        if ``unit`` is given something not comparable to Hz or rad/s
     """
     def __init__(self, *args, **kwargs):
-        # this is to allow the creation of LTI from
-        # z, p, k parameters in units of rad/s
-
-        if 'unit' not in kwargs.keys():
-            # assuming zeros, poles and gain given in Hz
-            signal.lti.__init__(self, *args)
-
-            # compute rad/s counterparts
-            z = self.zeros;
-            p = self.poles;
-            k = self.gain
-            self.zeros_s = MINUSTWOPI * z
-            self.poles_s = MINUSTWOPI * p
-            self.gain_s = (2 * numpy.pi)**(len(p) - len(z)) * k
-
-        elif len(args)==3 and kwargs['unit']!='Hz':
+        """Create a new `SOSFilter` from component definitions.
+        """
+        unit = Unit(kwargs.pop('unit', 'Hz'))
+        if kwargs:
+            raise TypeError("Invalid keyword argument for SOSFilter: %r"
+                            % kwargs.keys()[0])
+        # if Hertz, simply initialise
+        if unit == Hertz:
+            super(SOSFilter, self).__init__(*args)
+        # if rad/s convert zpk into Hertz on init
+        elif unit == radian/second:
             # assuming zeros, poles and gain given in rad/s
-            zs = numpy.array(args[0])
-            ps = numpy.array(args[1])
-            ks = args[2]
-
-            z = zs / (MINUSTWOPI)
-            p = ps / (MINUSTWOPI)
-            k = ks / (2 * numpy.pi)**(len(p) - len(z))
-
-            signal.lti.__init__(self, z, p, k)
+            lti_ = signal.lti(*args)
+            z = lti_.zeros
+            p = lti_.poles
+            k = lti_.gain
+            super(SOSFilter, self).__init__(
+                z / MINUSTWOPI,
+                p / MINUSTWOPI,
+                k / (2 * numpy.pi)**(len(p) - len(z)))
+        # otherwise fail
         else:
-            print 'Failed'
+            raise ValueError("Invalid unit '%s', please give one of 'Hertz' "
+                             "or 'radian/second'" % unit)
+        self.zeros_s = MINUSTWOPI * self.zeros
+        self.poles_s = MINUSTWOPI * self.poles
+        self.gain_s = (
+            (2 * numpy.pi)**(len(self.poles) - len(self.zeros)) * self.gain)
 
     def sresp(self, f):
         """
