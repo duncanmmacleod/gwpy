@@ -23,8 +23,12 @@ import numpy
 
 from scipy import signal
 
+from .. import version
+
+
 __author__ = 'Max Isi <max.isi@ligo.org>'
 __credits__ = 'Matt Evans'
+__version__ = version.version
 
 MINUSTWOPI = -2 * numpy.pi
 
