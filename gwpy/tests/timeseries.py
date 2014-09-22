@@ -47,6 +47,7 @@ class TimeSeriesTests(unittest.TestCase):
     """
     framefile = os.path.join(os.path.split(__file__)[0], 'data',
                              'HLV-GW100916-968654552-1.gwf')
+    tmpfile = '%s.%%s' % tempfile.mktemp(prefix='gwpy_test_')
 
     def setUp(self):
         random.seed(SEED)
@@ -82,12 +83,29 @@ class TimeSeriesTests(unittest.TestCase):
         except ImportError as e:
             raise unittest.SkipTest(str(e))
 
+    def test_ascii_write(self, delete=True):
+        self.ts = TimeSeries(self.data, sample_rate=1, name='TEST CASE',
+                             epoch=0, channel='TEST CASE')
+        asciiout = self.tmpfile % 'txt'
+        self.ts.write(asciiout)
+        if delete and os.path.isfile(asciiout):
+            os.remove(asciiout)
+        return asciiout
+
+    def test_ascii_read(self):
+        fp = self.test_ascii_write(delete=False)
+        try:
+            ts = TimeSeries.read(fp)
+        finally:
+            if os.path.isfile(fp):
+                os.remove(fp)
+
     def test_hdf5_write(self, delete=True):
         self.ts = TimeSeries(self.data, sample_rate=1, name='TEST CASE',
                              epoch=0, channel='TEST CASE')
-        hdfout = tempfile.mktemp(prefix='gwpy_test_')
+        hdfout = self.tmpfile % 'hdf'
         try:
-            self.ts.write(hdfout, format='hdf')
+            self.ts.write(hdfout)
         except ImportError as e:
             raise unittest.SkipTest(str(e))
         finally:
@@ -102,7 +120,7 @@ class TimeSeriesTests(unittest.TestCase):
             raise unittest.SkipTest(str(e))
         else:
             try:
-                ts = TimeSeries.read(hdfout, 'TEST CASE', format='hdf')
+                ts = TimeSeries.read(hdfout, 'TEST CASE')
             finally:
                 if os.path.isfile(hdfout):
                     os.remove(hdfout)

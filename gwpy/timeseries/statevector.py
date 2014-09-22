@@ -274,8 +274,8 @@ class StateVector(TimeSeries):
     """
     _metadata_slots = TimeSeries._metadata_slots + ['bits']
 
-    def __new__(cls, data, bits=[], times=None, epoch=None, channel=None,
-                sample_rate=None, name=None, dtype=numpy.uint32, **kwargs):
+    def __new__(cls, data, bits=None, times=None, epoch=None, channel=None,
+                sample_rate=None, name=None, dtype=None, **kwargs):
         """Generate a new `StateVector`.
         """
         return super(StateVector, cls).__new__(cls, data, name=name,
@@ -295,9 +295,18 @@ class StateVector(TimeSeries):
         """
         try:
             return self.metadata['bits']
-        except KeyError:
-            self.bits = Bits([])
-            return self.bits
+        except KeyError as e:
+            print(self.dtype.name)
+            if self.dtype.name.startswith(('uint', 'int')):
+                nbits = self.itemsize * 8
+                self.bits = Bits(['Bit %d' % b for b in range(nbits)],
+                                 channel=self.channel, epoch=self.epoch)
+                return self.bits
+            else:
+                e.args = ("No bit listing given for StateVector, and data "
+                          "type doesn't determine how many bits there should "
+                          "be, please give bits manually.",)
+                raise e
 
     @bits.setter
     def bits(self, mask):
@@ -305,6 +314,10 @@ class StateVector(TimeSeries):
             mask = Bits(mask, channel=self.channel,
                         epoch=self.metadata.get('epoch', None))
         self.metadata['bits'] = mask
+
+    @bits.deleter
+    def bits(self):
+        self.metadata.pop('bits', None)
 
     @property
     def boolean(self):
@@ -345,15 +358,12 @@ class StateVector(TimeSeries):
         for i, b in enumerate(bits):
             if not b in self.bits and isinstance(b):
                 bits[i] = self.bits[b]
-        try:
-            return self._bitseries.fromkeys(bits)
-        except AttributeError:
-            self._bitseries = TimeSeriesDict()
-            for i, bit in enumerate(self.bits):
-                self._bitseries[bit] = StateTimeSeries(
-                    self.data >> i & 1, name=bit, epoch=self.x0.value,
-                    channel=self.channel, sample_rate=self.sample_rate)
-            return self._bitseries
+        self._bitseries = TimeSeriesDict()
+        for i, bit in enumerate(self.bits):
+            self._bitseries[bit] = StateTimeSeries(
+                self.data >> i & 1, name=bit, epoch=self.x0.value,
+                channel=self.channel, sample_rate=self.sample_rate)
+        return self._bitseries
 
     # -------------------------------------------
     # StateVector methods
@@ -443,7 +453,7 @@ class StateVector(TimeSeries):
         return out
 
     @classmethod
-    def fetch(cls, channel, start, end, bits=[], host=None, port=None,
+    def fetch(cls, channel, start, end, bits=None, host=None, port=None,
               verbose=False, connection=None, type=NDS2_FETCH_TYPE_MASK):
         """Fetch data from NDS into a `StateVector`.
 
@@ -476,7 +486,8 @@ class StateVector(TimeSeries):
         new = StateVectorDict.fetch(
             [channel], start, end, host=host, port=port,
             verbose=verbose, connection=connection)[channel]
-        new.bits = bits
+        if bits:
+            new.bits = bits
         return new
 
     def to_lal(self, *args, **kwargs):

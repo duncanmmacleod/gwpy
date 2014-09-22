@@ -24,7 +24,11 @@ from .. import version
 __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
 __version__ = version.version
 
-try:
-    from . import hdf5
-except ImportError:
-    pass
+from ..core import Spectrum
+
+# register ASCII
+from ...io.ascii import register_ascii
+register_ascii(Spectrum)
+
+# register HDF5
+from . import hdf5
