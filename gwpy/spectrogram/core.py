@@ -256,10 +256,6 @@ class Spectrogram(Array2D):
     def filter(self, *filt, **kwargs):
         """Apply the given filter to this `Spectrogram`.
 
-        Recognised filter arguments are converted into the standard
-        ``(numerator, denominator)`` representation before being applied
-        to this `Spectrogram`.
-
         Parameters
         ----------
         *filt
@@ -275,17 +271,6 @@ class Spectrogram(Array2D):
         result : `Spectrogram`
             the filtered version of the input `Spectrogram`
 
-        See also
-        --------
-        scipy.signal.zpk2tf
-            for details on converting ``(zeros, poles, gain)`` into
-            transfer function format
-        scipy.signal.ss2tf
-            for details on converting ``(A, B, C, D)`` to transfer function
-            format
-        scipy.signal.freqs
-            for details on the filtering calculation
-
         Examples
         --------
         To apply a zpk filter with a pole at 0 Hz, a zero at 100 Hz and
@@ -298,33 +283,19 @@ class Spectrogram(Array2D):
         ValueError
             If ``filt`` arguments cannot be interpreted properly
         """
-        # parse filter
-        if len(filt) == 1 and isinstance(filt[0], signal.lti):
-            filt = filt[0]
-            a = filt.den
-            b = filt.num
-        elif len(filt) == 2:
-            b, a = filt
-        elif len(filt) == 3:
-            b, a = signal.zpk2tf(*filt)
-        elif len(filt) == 4:
-            b, a = signal.ss2tf(*filt)
-        else:
-            raise ValueError("Cannot interpret filter arguments. Please give "
-                             "either a signal.lti object, or a tuple in zpk "
-                             "or ba format. See scipy.signal docs for "
-                             "details.")
-        if isinstance(a, float):
-            a = numpy.array([a])
+        from ..timeseries.sosfilter import SOSFilter
         # parse keyword args
         inplace = kwargs.pop('inplace', False)
         if kwargs:
             raise TypeError("Spectrogram.filter() got an unexpected keyword "
                             "argument '%s'" % list(kwargs.keys())[0])
+        # get frequencies (protect against zeros)
         f = self.frequencies.data.copy()
         if f[0] == 0:
             f[0] = 1e-100
-        fresp = numpy.nan_to_num(abs(signal.freqs(b, a, f)[1]))
+        # calculate frequency response of filter
+        sos = SOSFilter(*filt)
+        fresp = abs(sos.sresp(self.frequencies))
         if inplace:
             self *= fresp
             return self

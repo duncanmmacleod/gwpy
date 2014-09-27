@@ -125,10 +125,6 @@ class Spectrum(Series):
     def filter(self, *filt, **kwargs):
         """Apply the given filter to this `Spectrum`.
 
-        Recognised filter arguments are converted into the standard
-        ``(numerator, denominator)`` representation before being applied
-        to this `Spectrum`.
-
         Parameters
         ----------
         *filt
@@ -144,17 +140,6 @@ class Spectrum(Series):
         result : `Spectrum`
             the filtered version of the input `Spectrum`
 
-        See also
-        --------
-        scipy.signal.zpk2tf
-            for details on converting ``(zeros, poles, gain)`` into
-            transfer function format
-        scipy.signal.ss2tf
-            for details on converting ``(A, B, C, D)`` to transfer function
-            format
-        scipy.signal.freqs
-            for details on the filtering calculation
-
         Examples
         --------
         To apply a zpk filter with a pole at 0 Hz, a zero at 100 Hz and
@@ -167,36 +152,6 @@ class Spectrum(Series):
         ValueError
             If ``filt`` arguments cannot be interpreted properly
         """
-        # parse filter
-        if len(filt) == 1 and isinstance(filt[0], signal.lti):
-            filt = filt[0]
-            a = filt.den
-            b = filt.num
-        elif len(filt) == 2:
-            b, a = filt
-        elif len(filt) == 3:
-            b, a = signal.zpk2tf(*filt)
-        elif len(filt) == 4:
-            b, a = signal.ss2tf(*filt)
-        else:
-            raise ValueError("Cannot interpret filter arguments. Please give "
-                             "either a signal.lti object, or a tuple in zpk "
-                             "or ba format. See scipy.signal docs for "
-                             "details.")
-        # parse keyword args
-        inplace = kwargs.pop('inplace', False)
-        if kwargs:
-            raise TypeError("Spectrum.filter() got an unexpected keyword "
-                            "argument '%s'" % list(kwargs.keys())[0])
-        fresp = abs(signal.freqs(b, a, self.frequencies * 2 * pi)[1])
-        if inplace:
-            self *= fresp
-            return self
-        else:
-            new = self * fresp
-            return new
-
-    def filter_sos(self, *filt, **kwargs):
         from ..timeseries.sosfilter import SOSFilter
         sos = SOSFilter(*filt)
         fresp = abs(sos.sresp(self.frequencies))
@@ -207,12 +162,6 @@ class Spectrum(Series):
         else:
             new = self * fresp
             return new
-
-    def filterba(self, *args, **kwargs):
-        warnings.warn("filterba will be removed soon, please use "
-                      "Spectrum.filter instead, with the same arguments",
-                      DeprecationWarning)
-        return self.filter(*args, **kwargs)
 
     @classmethod
     @with_import('lal')
