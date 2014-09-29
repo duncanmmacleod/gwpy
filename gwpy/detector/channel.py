@@ -332,7 +332,10 @@ class Channel(object):
 
     def __eq__(self, other):
         for attr in ['name', 'sample_rate', 'unit', 'url', 'type', 'dtype']:
-            if getattr(self, attr) != getattr(other, attr):
+            try:
+                if getattr(self, attr) != getattr(other, attr):
+                    return False
+            except TypeError:
                 return False
         return True
 
@@ -478,7 +481,7 @@ class ChannelList(list):
         if sample_rate is not None:
             sample_rate = (isinstance(sample_rate, units.Quantity) and
                            sample_rate.value or float(sample_rate))
-            c = [entry for entry in c if
+            c = [entry for entry in c if entry.sample_rate and
                  entry.sample_rate.value == sample_rate]
         if sample_range is not None:
             c = [entry for entry in c if

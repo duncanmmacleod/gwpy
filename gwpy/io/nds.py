@@ -20,6 +20,7 @@
 to LIGO data.
 """
 
+import os
 import sys
 import warnings
 
@@ -37,7 +38,6 @@ except ImportError:
     from ordereddict import OrderedDict
 
 DEFAULT_HOSTS = OrderedDict([
-    (None, ('ldas-pcdev4.ligo.caltech.edu', 31200)),
     (None, ('nds.ligo.caltech.edu', 31200)),
     ('H1', ('nds.ligo-wa.caltech.edu', 31200)),
     ('H0', ('nds.ligo-wa.caltech.edu', 31200)),
@@ -84,11 +84,38 @@ class NDSWarning(UserWarning):
 
 warnings.simplefilter('always', NDSWarning)
 
-def host_resolution_order(ifo):
+def host_resolution_order(ifo, env='NDSSERVER'):
+    """Generate a logical ordering of NDS (host, port) tuples for this IFO
+
+    Parameters
+    ----------
+    ifo : `str`
+        prefix for IFO of interest
+    env : `str`, optional
+        environment variable name to use for server order,
+        default ``'NDSSERVER'``
+
+    Returns
+    -------
+    hro : `list` of `2-tuples <tuple>`
+        `list` of ``(host, port)`` tuples
+    """
     hosts = []
-    if ifo in DEFAULT_HOSTS:
-        hosts.append(DEFAULT_HOSTS[ifo])
-    for difo, hp in DEFAULT_HOSTS.iteritems():
-        if difo != ifo and hp not in hosts:
-            hosts.append(hp)
+    # if NDSSERVER environment variable exists, it will contain a
+    # comma-separated list of host:port strings giving the logical ordering
+    if env and os.getenv('NDSSERVER'):
+        for host in os.getenv('NDSSERVER').split(','):
+            try:
+                host, port = host.rsplit(':', 1)
+            except ValueError:
+                port = None
+            else:
+                port = int(port)
+            if (host, port) not in hosts:
+                hosts.append((host, port))
+    # otherwise, return the server for this IFO and the backup at CIT
+    else:
+        for difo in [ifo, None]:
+            if difo in DEFAULT_HOSTS:
+                hosts.append(DEFAULT_HOSTS[difo])
     return hosts
