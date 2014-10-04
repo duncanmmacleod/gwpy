@@ -256,7 +256,7 @@ class SOSFilter(signal.lti):
                 # there are conjugate pole pairs left
                 zc_pool = sorted(zc_pool, key=dist(pc_pool.pop(0)))
                 new_z += [zc_pool.pop(0)]
-                zc_pool = sorted(zc_pool, key=dist(pc_pool.pop(1)))
+                zc_pool = sorted(zc_pool, key=dist(pc_pool.pop(0)))
                 new_z += [zc_pool.pop(0)]
             elif pr_pool:
                 # there are real poles left
