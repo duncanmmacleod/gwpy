@@ -1338,6 +1338,7 @@ class TimeSeriesList(list):
                             % (item.__class__.__name__,
                                self.__class__.__name__))
         super(TimeSeriesList, self).append(item)
+        return self
     append.__doc__ = list.append.__doc__
 
     def extend(self, item):

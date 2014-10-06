@@ -32,11 +32,11 @@ __all__ = ['SpectrogramPlot']
 
 
 class SpectrogramPlot(TimeSeriesPlot):
-    """`Figure` for displaying a :class:`~gwpy.spectrogram.core.Spectrogram`.
+    """`Figure` for displaying a :class:`~gwpy.spectrogram.Spectrogram`.
     """
     def __init__(self, *spectrograms, **kwargs):
-        self._logy = False
-
+        """Generate a new `SpectrogramPlot`
+        """
         # extract plotting keyword arguments
         plotargs = dict()
         plotargs['vmin'] = kwargs.pop('vmin', None)
@@ -51,7 +51,6 @@ class SpectrogramPlot(TimeSeriesPlot):
         # plot data
         for i,spectrogram in enumerate(spectrograms):
             self.add_spectrogram(spectrogram, newax=sep, **plotargs)
-            self.axes[-1].set_yscale('log')
             self.axes[-1].fmt_ydata = lambda f: ('%s %s'
                                                  % (f, spectrogram.yunit))
             self.axes[-1].set_ylabel('Frequency [%s]' % spectrogram.yunit)

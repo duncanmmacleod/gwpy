@@ -1006,8 +1006,8 @@ class DataQualityDict(OrderedDict):
         return self
 
     def __or__(self, other):
-        if sum(len(s) for s in self.values()) >= sum(len(s) for s in
-                                                     other.values()):
+        if (sum(len(s.active) for s in self.values()) >=
+            sum(len(s.active) for s in other.values())):
             return self.copy().__ior__(other)
         return other.copy().__ior__(self)
 
@@ -1042,3 +1042,70 @@ class DataQualityDict(OrderedDict):
         for key, value in new.items():
             dict.__setitem__(new, key, ~value)
         return new
+
+    def union(self):
+        """Return the union of all flags in this `DataQualityDict`
+
+        Returns
+        -------
+        union : `DataQualityFlag`
+            a new `DataQualityFlag` who's active and valid segments
+            are the union of those of the values of this `DataQualityDict`.
+        """
+        usegs = reduce(operator.or_, self.itervalues())
+        usegs.name = ' | '.join(self.iterkeys())
+        return usegs
+
+    def intersection(self):
+        """Return the intersection of all flags in this `DataQualityDict`
+
+        Returns
+        -------
+        intersection : `DataQualityFlag`
+            a new `DataQualityFlag` who's active and valid segments
+            are the intersection of those of the values of this
+            `DataQualityDict`.
+        """
+        isegs = reduce(operator.and_, self.itervalues())
+        isegs.name = ' & '.join(self.iterkeys())
+        return isegs
+
+    def plot(self, label='key', **kwargs):
+        """Plot the data for this `DataQualityDict`.
+
+        Parameters
+        ----------
+        label : `str`, optional
+            labelling system to use, or fixed label for all `DataQualityFlags`.
+            Special values include
+
+            - ``'key'``: use the key of the `DataQualityDict`,
+            - ``'name'``: use the :attr:`~DataQualityFlag.name` of the
+              `DataQualityFlag`
+
+            If anything else, that fixed label will be used for all lines.
+
+        **kwargs
+            all other keyword arguments are passed to the plotter as
+            appropriate
+
+        See Also
+        --------
+        gwpy.plotter.SegmentPlot
+        gwpy.plotter.SegmentAxes
+        gwpy.plotter.SegmentAxes.plot_dqdict
+        """
+        from ..plotter import SegmentPlot
+        figargs = dict()
+        for key in ['figsize', 'dpi']:
+            if key in kwargs:
+                figargs[key] = kwargs.pop(key)
+        axargs = dict()
+        for key in ['insetlabels']:
+            if key in kwargs:
+                axargs[key] = kwargs.pop(key)
+        plot_ = SegmentPlot(**figargs)
+        ax = plot_.gca(**axargs)
+        ax.plot(self, label=label, **kwargs)
+        ax.autoscale(axis='y')
+        return plot_
