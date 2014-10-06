@@ -25,7 +25,7 @@ import os
 import sys
 import warnings
 import re
-from math import (ceil, log)
+from math import (ceil, log, pi)
 from dateutil import parser as dateparser
 from multiprocessing import (Process, Queue as ProcessQueue)
 
@@ -76,6 +76,8 @@ _UFUNC_STRING = {'less': '<',
                  'greater_equal': '>=',
                  'greater': '>',
                  }
+
+TWOPI = 2 * pi
 
 
 @update_docstrings
@@ -734,97 +736,127 @@ class TimeSeries(Series):
     # -------------------------------------------
     # TimeSeries filtering
 
-    def highpass(self, frequency, numtaps=101, window='hamming'):
-        """Filter this `TimeSeries` with a Butterworth high-pass filter.
+    def _iirfilter(self, frequencies, btype, order, **kwargs):
+        # convert to radian/s
+        frequencies = 2 * numpy.asarray(frequencies) / self.sample_rate.value
+        # generate filter
+        kwargs.setdefault('output', 'zpk')
+        filter_ = signal.iirfilter(order, frequencies, btype=btype, **kwargs)
+        # apply filter and return
+        return self.filter(*filter_, unit='rad/s')
 
-        See (for example) :lalsuite:`XLALHighPassREAL8TimeSeries` for more
-        information.
-
-        Parameters
-        ----------
-        frequency : `float`
-            minimum frequency for high-pass
-        amplitude : `float`, optional
-            desired amplitude response of the filter
-        order : `int`, optional
-            desired order of the Butterworth filter
-        method : `str`, optional, default: 'scipy'
-            choose method of high-passing, LAL or SciPy
-
-        Returns
-        -------
-        TimeSeries
-
-        See Also
-        --------
-        See :lalsuite:`XLALHighPassREAL8TimeSeries` for information on
-        the LAL method, otherwise see :mod:`scipy.signal` for the SciPy
-        method.
-        """
-        filter_ = signal.firwin(numtaps, frequency, window=window,
-                                nyq=self.sample_rate.value/2.,
-                                pass_zero=False)
-        return self.filter(*filter_)
-
-    def lowpass(self, frequency, numtaps=61, window='hamming'):
-        """Filter this `TimeSeries` with a Butterworth low-pass filter.
+    def highpass(self, frequency, order=8, ftype='butter', rp=None, rs=None):
+        """High-pass filter this `TimeSeries`.
 
         Parameters
         ----------
-        frequency : `float`
-            minimum frequency for low-pass
-        amplitude : `float`, optional
-            desired amplitude response of the filter
-        order : `int`, optional
-            desired order of the Butterworth filter
-        method : `str`, optional, default: 'scipy'
-            choose method of high-passing, LAL or SciPy
+        frequency : `float`, `~astropy.units.Quantity`
+            corner frequency of the high-pass filter
+        order : `int`
+            order of the filter
+        ftype : `str`
+            the type of IIR filter to design:
+
+            - Butterworth   : 'butter'
+            - Chebyshev I   : 'cheby1'
+            - Chebyshev II  : 'cheby2'
+            - Cauer/elliptic: 'ellip'
+            - Bessel/Thomson: 'bessel'
+        rp : float, optional
+            for Chebyshev and elliptic filters, provides the maximum
+            ripple in the passband. (dB)
+        rs : float, optional
+            for Chebyshev and elliptic filters, provides the minimum
+            attenuation in the stop band. (dB)
 
         Returns
         -------
-        TimeSeries
+        data : `TimeSeries`
+            high-passed version of this `TimeSeries`
 
-        See Also
+        See also
         --------
-        See :lalsuite:`XLALLowPassREAL8TimeSeries` for information on
-        the LAL method, otherwise see :mod:`scipy.signal` for the SciPy
-        method.
+        scipy.signal.iirfilter
+            for details on the filter construction
         """
-        filter_ = signal.firwin(numtaps, frequency, window=window,
-                                nyq=self.sample_rate.value/2.)
-        return self.filter(*filter_)
+        return self._iirfilter(frequency, 'highpass', order, ftype=ftype,
+                               rp=rp, rs=rs)
 
-    def bandpass(self, flow, fhigh, lowtaps=61, hightaps=101,
-                 window='hamming'):
-        """Filter this `TimeSeries` by applying both low- and high-pass
-        filters.
-
-        See (for example) :lalsuite:`XLALLowPassREAL8TimeSeries` for more
-        information.
+    def lowpass(self, frequency, order=6, ftype='butter', rp=None, rs=None):
+        """Low-pass filter this `TimeSeries`.
 
         Parameters
         ----------
-        flow : `float`
-            minimum frequency for high-pass
-        fhigh : `float`
-            maximum frequency for low-pass
-        amplitude : `float`, optional
-            desired amplitude response of the filter
-        order : `int`, optional
-            desired order of the Butterworth filter
+        frequency : `float`, `~astropy.units.Quantity`
+            corner frequency of the low-pass filter
+        order : `int`
+            order of the filter
+        ftype : `str`
+            the type of IIR filter to design:
+
+            - Butterworth   : 'butter'
+            - Chebyshev I   : 'cheby1'
+            - Chebyshev II  : 'cheby2'
+            - Cauer/elliptic: 'ellip'
+            - Bessel/Thomson: 'bessel'
+        rp : float, optional
+            for Chebyshev and elliptic filters, provides the maximum
+            ripple in the passband. (dB)
+        rs : float, optional
+            for Chebyshev and elliptic filters, provides the minimum
+            attenuation in the stop band. (dB)
 
         Returns
         -------
-        TimeSeries
+        data : `TimeSeries`
+            low-passed version of this `TimeSeries`
 
-        See Also
+        See also
         --------
-        See :lalsuite:`XLALLowPassREAL8TimeSeries` for information on
-        the LAL method, otherwise see :mod:`scipy.signal` for the SciPy
-        method.
+        scipy.signal.iirfilter
+            for details on the filter construction
         """
-        high = self.highpass(flow, numtaps=lowtaps, window=window)
-        return high.lowpass(fhigh, numtaps=hightaps, window=window)
+        return self._iirfilter(frequency, 'lowpass', order, ftype=ftype, 
+                               rp=rp, rs=rs)
+
+    def bandpass(self, flow, fhigh, order=8, ftype='butter', rp=None, rs=None):
+        """Band-pass filter this `TimeSeries`.
+
+        Parameters
+        ----------
+        flow : `float`, `~astropy.units.Quantity`
+            lower cutoff frequency for the band-pass
+        fhigh : `float`, `~astropy.units.Quantity`
+            higher cutoff frequency for the band-pass
+        order : `int`
+            order of the filter
+        ftype : `str`
+            the type of IIR filter to design:
+
+            - Butterworth   : 'butter'
+            - Chebyshev I   : 'cheby1'
+            - Chebyshev II  : 'cheby2'
+            - Cauer/elliptic: 'ellip'
+            - Bessel/Thomson: 'bessel'
+        rp : float, optional
+            for Chebyshev and elliptic filters, provides the maximum
+            ripple in the passband. (dB)
+        rs : float, optional
+            for Chebyshev and elliptic filters, provides the minimum
+            attenuation in the stop band. (dB)
+
+        Returns
+        -------
+        data : `TimeSeries`
+            band-passed version of this `TimeSeries`
+
+        See also
+        --------
+        scipy.signal.iirfilter
+            for details on the filter construction
+        """
+        return self._iirfilter([flow, fhigh], 'bandpass', order,
+                               ftype=ftype, rp=rp, rs=rs)
 
     def resample(self, rate, window='hamming', numtaps=61):
         """Resample this Series to a new rate
@@ -864,7 +896,7 @@ class TimeSeries(Series):
         new.sample_rate = rate
         return new
 
-    def filter(self, *filt):
+    def filter(self, *filt, **kwargs):
         """Apply the given filter to this `TimeSeries`.
 
         Parameters
@@ -894,8 +926,13 @@ class TimeSeries(Series):
         ValueError
             If ``filt`` arguments cannot be interpreted properly
         """
-        lti = SOSFilter(*filt)
-        new = lti.filter(self.data, self.sample_rate.value).view(type(self))
+        if len(filt) == 1 and isinstance(filt[0], SOSFilter):
+            lti = filt[0]
+        else:
+            unit = kwargs.pop('unit', units.Hertz)
+            lti = SOSFilter(*filt, unit=unit)
+        new = lti.filter(self.data, self.sample_rate.value)
+        new = new.view(type(self))
         new.metadata = self.metadata.copy()
         return new
 
