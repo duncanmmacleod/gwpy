@@ -466,7 +466,6 @@ class TimeSeriesBase(Series):
         return cls(buffer_.data, **metadata)
 
     @classmethod
-    @with_import('lal')
     def from_lal(cls, lalts, copy=True):
         """Generate a new TimeSeries from a LAL TimeSeries of any type.
         """
@@ -484,21 +483,23 @@ class TimeSeriesBase(Series):
         else:
             return out
 
-    @with_import('lal')
     def to_lal(self):
         """Convert this `TimeSeries` into a LAL TimeSeries.
+
+        Returns
+        -------
+        lalseries : `lal.REAL8TimeSeries` or similar
+            a LAL series of the relevant type containing the same data
         """
-        from ..utils.lal import (LAL_TYPE_STR_FROM_NUMPY, to_lal_unit)
-        typestr = LAL_TYPE_STR_FROM_NUMPY[self.dtype.type]
+        import lal
+        from ..utils.lal import (to_lal_typestr, to_lal_unit)
+        typestr = to_lal_typestr(self.dtype)
         try:
             unit = to_lal_unit(self.unit)
-        except (TypeError, AttributeError):
-            try:
-                unit = lal.DimensionlessUnit
-            except AttributeError:
-                unit = lal.lalDimensionlessUnit
+        except ValueError:
+            unit = lal.DimensionlessUnit
         create = getattr(lal, 'Create%sTimeSeries' % typestr.upper())
-        lalts = create(self.name, lal.LIGOTimeGPS(self.epoch.gps), 0,
+        lalts = create(self.name, lal.LIGOTimeGPS(self.t0.value), 0,
                        self.dt.value, unit, self.size)
         lalts.data.data = self.value
         return lalts
