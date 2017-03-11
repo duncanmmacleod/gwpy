@@ -95,12 +95,14 @@ def marker_cycle(markers=None):
 # -- dynamic subplot positioning -----------------------------------------------
 
 SUBPLOT_WIDTH = {
+    6.4: (.18, .86),  # mpl 2.0 default
     8.: (.15, .88),
-    12.: (.1, .92),
+    12.: (.1, .9),
 }
 SUBPLOT_HEIGHT = {
     4.: (.2, .85),
-    6.: (.13, .9),
+    4.8: (.18, .88),  # mpl 2.0 default
+    6.: (.15, .9),
     8.: (.1, .92),
 }
 

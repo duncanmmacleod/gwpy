@@ -42,21 +42,6 @@ from .filter import *
 from .table import *
 from .histogram import *
 
-# set default params
-GWPY_PLOT_PARAMS = {
-    "axes.grid": True,
-    "axes.axisbelow": False,
-    "axes.formatter.limits": (-3, 4),
-    "axes.labelsize": 22,
-    "axes.titlesize": 26,
-    "grid.color": 'gray',
-    "image.aspect": 'auto',
-    "image.interpolation": 'nearest',
-    "image.origin": 'lower',
-    "xtick.labelsize": 20,
-    "ytick.labelsize": 20,
-}
-
 # construct new default color cycle
 GWPY_COLOR_CYCLE = [
     (0.0, 0.4, 1.0),  # blue
@@ -73,14 +58,40 @@ GWPY_COLOR_CYCLE = [
     'navy',
 ]
 
-# set mpl version dependent stuff
+# set default params
 try:
     from matplotlib import cycler
-    GWPY_PLOT_PARAMS.update({
+    GWPY_PLOT_PARAMS = {
         'axes.prop_cycle': cycler('color', GWPY_COLOR_CYCLE),
-    })
+        'axes.grid': True,
+        'axes.axisbelow': False,
+        'axes.formatter.limits': (-3, 4),
+        'axes.labelsize': 20,
+        'axes.titlesize': 24,
+        'grid.linestyle': ':',
+        'grid.linewidth': .5,
+        'image.aspect': 'auto',
+        'image.interpolation': 'nearest',
+        'image.origin': 'lower',
+        'legend.fancybox': False,
+        'xtick.labelsize': 20,
+        'ytick.labelsize': 20,
+    }
 except (ImportError, KeyError):  # mpl < 1.5
-    GWPY_PLOT_PARAMS['axes.color_cycle'] = GWPY_COLOR_CYCLE
+    GWPY_PLOT_PARAMS = {
+        'axes.color_cycle': GWPY_COLOR_CYCLE,
+        'axes.grid': True,
+        'axes.axisbelow': False,
+        'axes.formatter.limits': (-3, 4),
+        'axes.labelsize': 22,
+        'axes.titlesize': 26,
+        'grid.color': 'gray',
+        'image.aspect': 'auto',
+        'image.interpolation': 'nearest',
+        'image.origin': 'lower',
+        'xtick.labelsize': 20,
+        'ytick.labelsize': 20,
+}
 
 # set latex options
 if rcParams['text.usetex'] or USE_TEX:
