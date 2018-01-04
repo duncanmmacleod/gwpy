@@ -21,6 +21,12 @@
 
 On Feb 13 2015 there was a massive earthquake in the Atlantic Ocean, that
 should have had an impact on LIGO operations, I'd like to find out.
+
+.. note::
+
+   This example requires access to proprietary data available only to LIGO
+   Scientific Collaboration and Virgo Collaboration members.
+
 """
 
 __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
@@ -43,10 +49,10 @@ channels = [
 
 # At last we can :meth:`~TimeSeriesDict.get` 12 hours of data for each
 # interferometer:
-lho = TimeSeriesDict.get([c % 'H1' for c in channels],
-                         'Feb 13 2015 16:00', 'Feb 14 2015 04:00')
-llo = TimeSeriesDict.get([c % 'L1' for c in channels],
-                         'Feb 13 2015 16:00', 'Feb 14 2015 04:00')
+lho = TimeSeriesDict.get([c % 'H1' for c in channels], 'Feb 13 2015 16:00',
+                         'Feb 14 2015 04:00', frametype='H1_T')
+llo = TimeSeriesDict.get([c % 'L1' for c in channels], 'Feb 13 2015 16:00',
+                         'Feb 14 2015 04:00', frametype='L1_T')
 
 # Next we can plot the data, with a separate `~gwpy.plotter.Axes` for each
 # instrument:
