@@ -19,11 +19,12 @@
 """Input/Output utilities for LAL Cache files.
 """
 
-from __future__ import division
+from __future__ import (division, print_function)
 
 import os.path
 import tempfile
 import warnings
+from functools import wraps
 from gzip import GzipFile
 
 from six import string_types
@@ -57,6 +58,19 @@ except AttributeError:
 FILE_LIKE = tuple(FILE_LIKE)
 
 
+def _preformat_line(func):
+    """Pre-format a line of text as a `str` without ending breaks
+    """
+    @wraps(func)
+    def wrapped(line, *args, **kwargs):  # pylint: disable=missing-docstring
+        if isinstance(line, bytes):
+            line = line.decode('utf-8')
+        if isinstance(line, string_types):
+            line = line.rstrip('\n')
+        return func(line, *args, **kwargs)
+    return wrapped
+
+
 # -- cache I/O ----------------------------------------------------------------
 
 def read_cache(lcf, coltype=LIGOTimeGPS):
@@ -86,8 +100,73 @@ def read_cache(lcf, coltype=LIGOTimeGPS):
     for line in lcf:
         if isinstance(line, bytes):
             line = line.decode('utf-8')
-        out.append(out.entry_class(line, coltype=coltype))
+        out.append(read_cache_entry(line, coltype=coltype))
     return out
+
+
+@_preformat_line
+def read_cache_entry(line, coltype=LIGOTimeGPS):
+    """Read a `lal.CacheEntry` from a line of text
+
+    Parameters
+    ----------
+    line : `str`, `bytes`
+        Line of text to parse
+
+    Returns
+    -------
+    entry : `lal.CacheEntry`
+       The parsed entry
+
+    Raises
+    ------
+    ValueError
+        if the line cannot be parsed successfully as a `lal.CacheEntry`
+    """
+    try:
+        return lal_cache_entry(line, coltype=coltype)
+    except ValueError as exc:  # maybe its an FFL line?
+        try:
+            return ffl_cache_entry(line, coltype=coltype)
+        except (ValueError, TypeError):
+            raise exc
+
+
+@_preformat_line
+def lal_cache_entry(line, coltype=LIGOTimeGPS):
+    """Parse a `lal.CacheEntry` from a line in a LAL cache file
+    """
+    entry = Cache.entry_class(line, coltype=coltype)
+
+    # Virgo FFL entry will return a 'path' of '0.000000', so check here
+    try:
+        float(entry.path)
+    except ValueError:  # parsed as LAL format entry
+        return entry
+    raise ValueError("could not convert {0} to CacheEntry".format(
+        line))
+
+
+@_preformat_line
+def ffl_cache_entry(line, coltype=LIGOTimeGPS):
+    """Parse a `lal.CacheEntry` from a line in an FFL file
+
+    Parameters
+    ----------
+    line : `str`, `bytes`
+        Line of text to parse
+
+    Returns
+    -------
+    entry : `lal.CacheEntry`
+       The parsed entry
+    """
+    filename, gps, duration, _, _ = line.split()
+    gps = coltype(str(gps))
+    duration = float(duration)
+    entry = Cache.entry_class.from_T050017(filename)
+    entry.segment = type(entry.segment)(gps, gps+duration)
+    return entry
 
 
 def open_cache(*args, **kwargs):  # pylint: disable=missing-docstring
@@ -112,13 +191,19 @@ def write_cache(cache, fobj):
         with open(fobj, 'w') as fobj2:
             return write_cache(cache, fobj2)
 
+    ffl = getattr(fobj, 'name', '').endswith('.ffl')
+
     # write file
     for entry in cache:
-        line = '%s\n' % entry
+        if ffl:
+            line = '{0.path} {0.segment[0]} {1} 0.0 0.0'.format(
+                entry, abs(entry.segment))
+        else:
+            line = str(entry)
         try:
-            fobj.write(line)
+            print(line, file=fobj)
         except TypeError:
-            fobj.write(line.encode('utf-8'))
+            print(line.encode('utf-8'), file=fobj)
 
 
 def is_cache(cache):
@@ -137,12 +222,12 @@ def is_cache(cache):
     """
     if isinstance(cache, string_types + FILE_LIKE):
         try:
-            c = read_cache(cache)
+            cache_ = read_cache(cache)
         except (TypeError, ValueError, UnicodeDecodeError, ImportError):
             # failed to parse cache
             return False
         else:
-            if not c:  # return empty file as False
+            if not cache_:  # return empty file as False
                 return False
             return True
     elif isinstance(cache, Cache):

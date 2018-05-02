@@ -29,6 +29,7 @@ ASCII
 
 GWpy supports writing `TimeSeries` (and `~gwpy.frequencyseries.FrequencySeries`) data to ASCII in a two-column ``time`` and ``amplitude`` format.
 
+-------
 Reading
 -------
 
@@ -38,6 +39,7 @@ To read a `TimeSeries` from ASCII::
 
 See :func:`numpy.loadtxt` for keyword argument options.
 
+-------
 Writing
 -------
 
@@ -57,6 +59,7 @@ Gravitational-wave frames (GWF)
 
 The raw observatory data are archived in ``.gwf`` files, a custom binary format that efficiently stores the time streams and all necessary metadata, for more details about this particular data format, take a look at the specification document `LIGO-T970130 <https://dcc.ligo.org/LIGO-T970130/public>`_.
 
+-------
 Reading
 -------
 
@@ -101,6 +104,7 @@ For example::
    >>> data = TimeSeries.read('HLV-HW100916-968654552-1.gwf', 'L1:LDAS-STRAIN',
    ...                        resample=2048)
 
+-------------------------
 Reading multiple channels
 -------------------------
 
@@ -119,6 +123,7 @@ The above example will resample only the ``'H1:LDAS-STRAIN'`` `TimeSeries` and w
 
    A mix of `TimeSeries` and `StateVector` objects can be read by using only `TimeSeriesDict` class, and casting the returned data to a `StateVector` using :meth:`~TimeSeries.view`.
 
+-------
 Writing
 -------
 
@@ -139,6 +144,7 @@ HDF5
 GWpy allows storing data in HDF5 format files, using a custom specification for storage of metadata.
 
 
+-------
 Reading
 -------
 
@@ -159,6 +165,7 @@ By default, all matching datasets in the file will be read, to restrict the outp
    >>> data = TimeSeriesDict.read('HLV-HW100916-968654552-1.hdf', ['H1:LDAS-STRAIN', 'L1:LDAS-STRAIN'])
 
 
+-------
 Writing
 -------
 
@@ -190,6 +197,7 @@ Any `TimeSeries` can be written to / read from a WAV file using :meth:`TimeSerie
 
    No metadata are stored in the WAV file except the sampling rate, so any units or GPS timing information are lost when converting to/from WAV.
 
+-------
 Reading
 -------
 
@@ -199,6 +207,7 @@ To read a `TimeSeries` from WAV::
 
 See :func:`scipy.io.wavfile.read` for any keyword argument options.
 
+-------
 Writing
 -------
 
@@ -207,3 +216,56 @@ To write a `TimeSeries` to WAV::
    >>> t.write('data.wav')
 
 See :func:`scipy.io.wavfile.write` for keyword argument options.
+
+===========
+Cache files
+===========
+
+A `TimeSeries` (or `TimeSeriesDict`) can also be written by directly referencing a cache file, a plaintext file that contains a formatted list of file paths that represent a data set.
+The cache file format(s) is (are) designed to present a list of file paths (or URLs) with metadata that makes parsing and sieving the list a little easier.
+
+------------------
+Cache file formats
+------------------
+
+In gravitational-wave data analysis there are two standard formats for data cache files:
+
+^^^^^^^^^^^^^^
+LAL (``.lcf``)
+^^^^^^^^^^^^^^
+
+.. code-block:: none
+
+   <observatory> <description> <GPS-start-time> <duration> <url>
+
+e.g.
+
+.. code-block:: none
+
+   H1 R 1000000000 100 /path/to/H1-R-1000000000-100.gwf
+
+^^^^^^^^^^^^^^
+FFL (``.ffl``)
+^^^^^^^^^^^^^^
+
+.. code-block:: none
+
+   <url> <GPS-start-time> <duration> <unknown> <unknown>
+
+e.g.
+
+.. code-block:: none
+
+   /path/to/H1-R-1000000000-100.gwf 1000000000 100 0 0
+
+-------
+Reading
+-------
+
+To read a `TimeSeries` from data referenced in a cache file, simply pass the cache file URL to :meth:`TimeSeries.read`::
+
+   >>> t = TimeSeries.read('data.lcf')
+
+In order to restrict the data read out of the cache (so you can read a small amount of data from a large cache), you can pass the ``start`` and/or ``end`` keywords::
+
+   >>> t = TimeSeries.read('data.lcf', start=1000000000)

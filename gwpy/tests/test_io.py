@@ -240,6 +240,19 @@ class TestIoCache(object):
             c3 = io_cache.read_cache(f.name)
             assert cache == c3
 
+    def test_read_write_ffl(self):
+        cache = self.make_cache()[0]
+        with tempfile.NamedTemporaryFile(suffix='.ffl') as f:
+            # write and assert format is correct
+            io_cache.write_cache(cache, f.name)
+            f.seek(0)
+            assert f.readline().startswith(cache[0].path)
+            f.seek(0)
+
+            # read again
+            c2 = io_cache.read_cache(f)
+            assert cache == c2
+
     @utils.skip_missing_dependency('lal.utils')
     def test_is_cache(self):
         # sanity check
