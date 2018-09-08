@@ -24,7 +24,6 @@
 
 import os.path
 import re
-import warnings
 
 from astropy.units import Quantity
 
@@ -152,13 +151,7 @@ class Qtransform(Spectrogram):
                 return '[{0}]'.format(', '.join(map(fformat, x)))
             if isinstance(x, Quantity):
                 x = x.value
-            elif isinstance(x, str):
-                warnings.warn('WARNING: fformat called with a' +
-                            ' string. This has ' +
-                            'been depricated and may disappear ' +
-                            'in a future release.')
-                x = float(x)
-            return '{0:.2f}'.format(x)
+            return '{0:.2f}'.format(float(x))
 
         bits = [('Q', fformat(self.result.q))]
         if self.qxfrm_args.get('qrange'):
