@@ -32,7 +32,7 @@ from .. import text as plot_text
     ('test', 'test', 'test'),
     (4.0, '4.0', '4',),
     (8, '8', '8'),
-    (Unit('m/Hz2'), '$\\mathrm{m\\,Hz^{-2}}$', '$\\mathrm{m\\,Hz^{-2}}$'),
+    (Unit('m/Hz2'), r'$\mathrm{m\,Hz^{-2}}$', r'$\mathrm{m\,Hz^{-2}}$'),
 ])
 def test_to_string(in_, out, texout):
     with rc_context(rc={'text.usetex': False}):
