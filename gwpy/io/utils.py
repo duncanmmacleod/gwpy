@@ -21,6 +21,7 @@
 
 import gzip
 import tempfile
+from pathlib import PurePath
 from urllib.parse import urlparse
 
 __author__ = 'Duncan Macleod <duncan.macleod@ligo.org>'
@@ -56,8 +57,17 @@ def identify_factory(*extensions):
         """Identify the given extensions in a file object/path
         """
         # pylint: disable=unused-argument
-        if (isinstance(filepath, str) and
-                filepath.endswith(extensions)):
+        if (  # detect use of Path (which astropy doesn't handle well)
+                filepath is None and
+                fileobj is None
+                and args and
+                isinstance(args[0], PurePath)
+        ):
+            filepath = args[0].name
+        if (
+                isinstance(filepath, str) and
+                filepath.endswith(extensions)
+        ):
             return True
         return False
     return identify

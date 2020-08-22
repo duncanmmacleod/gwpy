@@ -21,6 +21,7 @@
 
 import gzip
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -61,6 +62,7 @@ def test_identify_factory():
     assert id_func(None, 'test.blah', None) is True
     assert id_func(None, 'test.blah2', None) is True
     assert id_func(None, 'test.blah2x', None) is False
+    assert id_func(None, None, None, Path('test.blah')) is True
 
 
 def test_file_list_file(cache):  # noqa: F811
