@@ -20,6 +20,7 @@
 """
 
 import json
+from pathlib import Path
 
 from ...io import registry
 from ...io.utils import identify_factory
@@ -83,7 +84,7 @@ def write_json_flag(flag, fobj, **kwargs):
         for details on acceptable keyword arguments
     """
     # write to filename
-    if isinstance(fobj, str):
+    if isinstance(fobj, (str, Path)):
         with open(fobj, 'w') as fobj2:
             return write_json_flag(flag, fobj2, **kwargs)
 
