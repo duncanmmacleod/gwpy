@@ -30,6 +30,7 @@ from contextlib import contextmanager
 from functools import wraps
 from importlib import import_module
 from numbers import Integral
+from pathlib import Path
 
 import numpy
 
@@ -446,8 +447,8 @@ def open_xmldoc(fobj, **kwargs):
     use_in(kwargs.setdefault('contenthandler', LIGOLWContentHandler))
 
     try:  # try and load existing file
-        if isinstance(fobj, str):
-            return load_filename(fobj, **kwargs)
+        if isinstance(fobj, (str, Path)):
+            return load_filename(str(fobj), **kwargs)
         if isinstance(fobj, FILE_LIKE):
             return load_fileobj(fobj, **kwargs)[0]
     except (OSError, IOError):  # or just create a new Document
@@ -557,7 +558,7 @@ def write_tables(target, tables, append=False, overwrite=False, **kwargs):
     # fail on existing document and not overwriting
     elif (
         not overwrite
-        and isinstance(target, str)
+        and isinstance(target, (str, Path))
         and os.path.isfile(target)
     ):
         raise IOError("File exists: {}".format(target))
@@ -573,7 +574,7 @@ def write_tables(target, tables, append=False, overwrite=False, **kwargs):
         name = target.name
     else:
         writer = ligolw_utils.write_filename
-        name = str(target)
+        name = target = str(target)
 
     # handle gzip compression kwargs
     if name.endswith('.gz') and writer.__module__.startswith('glue'):
