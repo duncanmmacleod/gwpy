@@ -287,6 +287,8 @@ conda = [
 addopts = "-r a"
 minversion = "8.1"
 filterwarnings = [
+  # fail tests on any warnings
+  "error",
   # ignore pkg_resources deprecation warnings
   "ignore:pkg_resources is deprecated",
   "ignore:Deprecated call to `pkg_resources",
