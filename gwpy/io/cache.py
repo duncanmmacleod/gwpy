@@ -226,7 +226,7 @@ def write_cache(cache, fobj, format=None):
     cache : `list` of `str`
         The list of file paths to write
 
-    fobj : `file`, `str`
+    fobj : `file`, `str`, `pathlib.Path`
         The open file object, or file path to write to.
 
     format : `str`, optional
@@ -237,7 +237,7 @@ def write_cache(cache, fobj, format=None):
         - ``'ffl'`` : write an FFL-format cache
     """
     # open file
-    if isinstance(fobj, str):
+    if not isinstance(fobj, FILE_LIKE):
         with open(fobj, 'w') as fobj2:
             return write_cache(cache, fobj2, format=format)
 
