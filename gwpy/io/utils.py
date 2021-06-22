@@ -21,6 +21,7 @@
 
 import gzip
 import tempfile
+from pathlib import Path
 from urllib.parse import urlparse
 
 __author__ = 'Duncan Macleod <duncan.macleod@ligo.org>'
@@ -185,8 +186,8 @@ def file_path(fobj):
     """
     if isinstance(fobj, str) and fobj.startswith("file:"):
         return urlparse(fobj).path
-    if isinstance(fobj, str):
-        return fobj
+    if isinstance(fobj, (str, Path)):
+        return str(fobj)
     if (isinstance(fobj, FILE_LIKE) and hasattr(fobj, "name")):
         return fobj.name
     try:
