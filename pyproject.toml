@@ -309,6 +309,8 @@ filterwarnings = [
   "ignore:The module `astropy.cosmology.core` is deprecated::astropy",
   # ignore false-positive warnings from dateparser
   "ignore:Parsing dates involving a day::dateparser",
+  # https://git.ligo.org/gwinc/inspiral-range/-/issues/12
+  "ignore:Please use `p_roots`::inspiral_range..*",
 ]
 xfail_strict = true
 
