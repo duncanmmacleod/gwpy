@@ -56,7 +56,6 @@ Here we see the random data we have created, as well as the associated
 metadata common to any time series data:
 
 .. autosummary::
-   :caption: Attributes of the `TimeSeries`
 
    ~TimeSeries.unit
    ~TimeSeries.t0
@@ -73,7 +72,6 @@ small set of related classes for handling collections of data:
 
 .. autosummary::
    :nosignatures:
-   :caption: `TimeSeries` container classes
 
    TimeSeriesDict
    TimeSeriesList
