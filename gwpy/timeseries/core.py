@@ -383,7 +383,7 @@ class TimeSeriesBase(Series):
                         tag=None, version=None,
                         format='hdf5', host=GWOSC_DEFAULT_HOST,
                         verbose=False, cache=None, **kwargs):
-        """Fetch open-access data from the LIGO Open Science Center
+        """Fetch open-access data from the GW Open Science Center (GWOSC).
 
         Parameters
         ----------
@@ -470,7 +470,7 @@ class TimeSeriesBase(Series):
 
         Notes
         -----
-        `StateVector` data are not available in ``txt.gz`` format.
+        For more details, see :ref:`gwpy-timeseries-opendata`.
         """
         from .io.losc import fetch_gwosc_data
         return fetch_gwosc_data(

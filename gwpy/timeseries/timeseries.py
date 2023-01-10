@@ -1068,7 +1068,8 @@ class TimeSeries(TimeSeriesBase):
         >>> notches = [filter_design.notch(f, 4096.) for f in (60, 120, 180)]
         >>> zpk = filter_design.concatenate_zpks(bp, *notches)
 
-        And then can download some data from GWOSC to apply it using
+        And then can download some data from
+        :ref:`GWOSC <gwpy-timeseries-opendata>` to apply it using
         `TimeSeries.filter`:
 
         >>> from gwpy.timeseries import TimeSeries
@@ -1481,8 +1482,9 @@ class TimeSeries(TimeSeriesBase):
         --------
         Demodulation is useful when trying to examine steady sinusoidal
         signals we know to be contained within data. For instance,
-        we can download some data from GWOSC to look at trends of the
-        amplitude and phase of LIGO Livingston's calibration line at 331.3 Hz:
+        we can download some data from :ref:`GWOSC <gwpy-timeseries-opendata>`
+        to look at trends of the amplitude and phase of LIGO Livingston's
+        calibration line at 331.3 Hz:
 
         >>> from gwpy.timeseries import TimeSeries
         >>> data = TimeSeries.fetch_open_data('L1', 1131350417, 1131357617)
@@ -1565,8 +1567,8 @@ class TimeSeries(TimeSeriesBase):
         To see an example of heterodyning in action, we can simulate a signal
         whose phase evolution is described by the frequency and its first
         derivative with respect to time. We can download some O1 era
-        LIGO-Livingston data from GWOSC, inject the simulated signal, and
-        recover its amplitude.
+        LIGO-Livingston data from :ref:`GWOSC <gwpy-timeseries-opendata>`,
+        inject the simulated signal, and recover its amplitude.
 
         >>> from gwpy.timeseries import TimeSeries
         >>> data = TimeSeries.fetch_open_data('L1', 1131350417, 1131354017)
