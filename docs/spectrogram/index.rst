@@ -10,7 +10,10 @@ While the `~gwpy.timeseries.TimeSeries` allows us to study how the amplitude of 
 
 This object is a 2-dimensional array, essentially a stacked set of spectra, one per unit time.
 
-As always, a `Spectrogram` can be generated from any arbitrary data sequence, but here the required metadata are a combination of those required for the `~gwpy.timeserises.TimeSeries` and `~gwpy.frequencyseries.FrequencySeries`::
+As always, a `Spectrogram` can be generated from any arbitrary data sequence, but here the required metadata are a combination of those required for the `~gwpy.timeserises.TimeSeries` and `~gwpy.frequencyseries.FrequencySeries`:
+
+.. code-block:: python
+    :caption: Creating a :class:`Spectrogram` from random data
 
     >>> import numpy
     >>> specgram = Spectrogram(numpy.random.random((100, 1000)), epoch=1000000000, sample_rate=1, f0=0, df=1)
@@ -47,47 +50,59 @@ The full set of metadata that can be provided is as follows:
    ~Spectrogram.f0
    ~Spectrogram.df
 
-================================================================
-Calculating a `Spectrogram` from a `~gwpy.timeseries.TimeSeries`
-================================================================
+=======================================================================
+Calculating a `Spectrogram` from a :class:`~gwpy.timeseries.TimeSeries`
+=======================================================================
 
-The time-frequency `Spectrogram` of a `~gwpy.timeseries.TimeSeries` can be calculated using the :meth:`~gwpy.timeseries.TimeSeries.spectrogram` method.
-We can extend previous examples of plotting a `~gwpy.timeseries.TimeSeries` with calculation of a `Spectrogram` with a 20-second stride:
+The time-frequency :class:`Spectrogram` of a
+:class:`~gwpy.timeseries.TimeSeries` can be calculated using the
+:meth:`~gwpy.timeseries.TimeSeries.spectrogram` method.
+We can extend previous examples of plotting a
+:class:`~gwpy.timeseries.TimeSeries` with calculation of a `Spectrogram`
+with a 2-second stride:
 
 .. plot::
-   :context: reset
-   :include-source:
-   :nofigs:
+    :context: reset
+    :include-source:
+    :nofigs:
+    :caption: Generating a :class:`Spectrogram` from a :class:`~gwpy.timeseries.TimeSeries`
 
-   >>> from gwpy.timeseries import TimeSeries
-   >>> gwdata = TimeSeries.get('H1:LDAS-STRAIN', 'September 16 2010 06:40',
-   ...                         'September 16 2010 06:50')
-   >>> specgram = gwdata.spectrogram(20, fftlength=8, overlap=4) ** (1/2.)
-
+    from gwpy.timeseries import TimeSeries
+    gwdata = TimeSeries.fetch_open_data(
+        "H1",
+        "Sep 14 2015 09:45",
+        "Sep 14 2015 09:55",
+    )
+    specgram = gwdata.spectrogram(2, fftlength=1) ** (1/2.)
 
 .. _gwpy-spectrogram-plot:
 
-========================
-Plotting a `Spectrogram`
-========================
+===============================
+Plotting a :class:`Spectrogram`
+===============================
 
-Like the `~gwpy.timeseries.TimeSeries` and `~gwpy.frequencyseries.FrequencySeries`, the `Spectrogram` has a convenient :meth:`~Spectrogram.plot` method, allowing us to view the data.
-We can extend the previous time-series example to include a plot:
+Like the :class:`~gwpy.timeseries.TimeSeries` and
+:class:`~gwpy.frequencyseries.FrequencySeries`, the :class:`Spectrogram` has a
+convenient :meth:`~Spectrogram.plot` method, allowing us to create views of
+the daa.
+We can extend the previous snippet to include a plot:
 
 .. plot::
-   :context:
-   :include-source:
+    :context:
+    :include-source:
+    :caption: Plotting a :class:`Spectrogram`
 
-   >>> plot = specgram.plot(norm='log', vmin=1e-23, vmax=1e-19)
-   >>> ax = plot.gca()
-   >>> ax.set_ylim(40, 4000)
-   >>> ax.set_yscale('log')
-   >>> ax.colorbar(label='GW strain ASD [strain/$\sqrt{\mathrm{Hz}}$]')
-   >>> plot.show()
+    plot = specgram.plot(norm='log', vmin=5e-24, vmax=1e-19)
+    ax = plot.gca()
+    ax.set_yscale('log')
+    ax.set_ylim(10, 2000)
+    ax.colorbar(
+        label=r'Gravitational-wave amplitude [strain/$\sqrt{\mathrm{Hz}}$]')
+    plot.show()
 
-==========================
-`Spectrogram` applications
-==========================
+=================================
+:class:`Spectrogram` applications
+=================================
 
 .. toctree::
    :titlesonly:
