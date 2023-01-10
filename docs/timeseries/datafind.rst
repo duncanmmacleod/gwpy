@@ -33,9 +33,9 @@ authorisation credential to access) and also the |GWOSC_AUX_RELEASE|_
 
 .. _gwpy-timeseries-get:
 
-**********************
+======================
 :meth:`TimeSeries.get`
-**********************
+======================
 
 **Additional dependencies:** |LDAStools.frameCPP|_ or |nds2|_
 
@@ -43,9 +43,9 @@ GWpy provides the :meth:`TimeSeries.get` method as a one-stop interface
 to all automatically-discoverable data hosted locally at an IGWN
 computing centre, or available remotely.
 
-============
+------------
 How it works
-============
+------------
 
 Without any customisation, :meth:`TimeSeries.get` will attempt to locate
 data 'by any means necessary'; in practice that is
@@ -73,36 +73,39 @@ data 'by any means necessary'; in practice that is
 
 .. _gwpy-timeseries-get-example:
 
-=======
+-------
 Example
-=======
+-------
 
 For example, to channel that records the power incident on the
-input mode cleaner (IMC) at LIGO-Hanford, is called::
+input mode cleaner (IMC) for the 'H1' instrument at LIGO-Hanford is called:
+
+.. code-block:: text
 
    H1:IMC-PWR_IN_OUT_DQ
 
-and we can use :meth:`TimeSeries.get` to 'get' the data for that
+We can use :meth:`TimeSeries.get` to 'get' the data for that
 channel by specifying the special GWOSC NDS2 server url using the
 ``host`` keyword:
 
 .. plot::
-   :context: reset
+    :context: reset
+    :caption: Get H1 power data from GWOSC using NDS2
 
-   >>> from gwosc.datasets import event_gps
-   >>> from gwpy.timeseries import TimeSeries
-   >>> gps = event_gps("GW170814")
-   >>> start = int(gps) - 100
-   >>> end = int(gps) + 100
-   >>> data = TimeSeries.get("H1:IMC-PWR_IN_OUT_DQ", start, end, host="losc-nds.ligo.org")
-   >>> plot = data.plot(ylabel="Power [W]")
-   >>> plot.show()
+    from gwosc.datasets import event_gps
+    from gwpy.timeseries import TimeSeries
+    gps = event_gps("GW170814")
+    start = int(gps) - 100
+    end = int(gps) + 100
+    data = TimeSeries.get("H1:IMC-PWR_IN_OUT_DQ", start, end, host="losc-nds.ligo.org")
+    plot = data.plot(ylabel="Power [W]")
+    plot.show()
 
 .. _gwpy-timeseries-datafind-datasets:
 
-********************
-Proprietary datasets
-********************
+==================
+Available datasets
+==================
 
 All data archived at an IGWN computing centre are identified by a data
 set 'tag', which identifies which data are contained in a given ``gwf``
@@ -114,98 +117,83 @@ If you know the dataset name -- the tag associated with files containing your
 data -- you can pass that via the ``frametype`` keyword argument to
 significantly speed up the search.
 
-The following table is an incomplete, but probably OK, reference to which
-dataset (``frametype``) you want to use for file-based data access:
+Different computing centres archive different datasets, so what data
+are available is highly-dependent on the location.
+To discover which datasets are available using the default GWDataFind server:
 
-.. tabbed:: GEO-600
+.. code-block:: python
+    :caption: Listing datasets with GWDataFind
 
-   .. table:: GEO-600 datasets available with |gwdatafind|_
-      :name: gwdatafind-datasets-geo600
+    from gwdatafind import find_types
+    print(find_types())
 
-      ========================  =====================================================
-      Dataset (frametype)       Description
-      ========================  =====================================================
-      ``G1_RDS_C01_L3``         The GEO-600 data, including calibrated strain *h(t)*
-      ========================  =====================================================
+.. note::
 
-.. tabbed:: LIGO-Hanford
+    GWDataFind does not provide any documentation for data type; it can
+    be hard to determine the purpose or contents of a dataset just from
+    its name, see below for some special cases.
 
-   .. table:: LIGO-Hanford datasets available with |gwdatafind|_
-      :name: gwdatafind-datasets-ligo-hanford
+-----------------------
+Publicly available data
+-----------------------
 
-      ========================  =====================================================
-      Dataset (frametype)       Description
-      ========================  =====================================================
-      ``H1_R``                  All auxiliary channels, stored at the native sampling
-                                rate
-      ``H1_T``                  Second trends of all channels, including
-                                ``.mean``, ``.min``, and ``.max``
-      ``H1_M``                  Minute trends of all channels, including
-                                ``.mean``, ``.min``, and ``.max``
-      ``H1_HOFT_C00``           Strain *h(t)* and metadata generated using the
-                                real-time calibration pipeline
-      ``H1_HOFT_CXY``           Strain *h(t)* and metadata generated using the
-                                off-line calibration pipeline at version ``XY``
-      ``H1_GWOSC_O2_4KHZ_R1``   4k Hz Strain *h(t)* and metadata as released by
-                                |GWOSC|_ for the O2 data release
-      ``H1_GWOSC_O2_16KHZ_R1``  16k Hz Strain *h(t)* and metadata as released by
-                                |GWOSC|_ for the O2 data release
-      ========================  =====================================================
+Data published through |GWOSCl|_ are distributed using
+`CVMFS <https://cernvm.cern.ch/>`__, and can be discovered using
+:mod:`gwdatafind` via the ``https://datafind.gw-openscience.org`` server URL:
 
-.. tabbed:: LIGO-Livingston
+.. code-block:: python
+    :caption: Listing GWOSC datasets with GWDataFind
 
-   .. table:: LIGO-Livingston datasets available with |gwdatafind|_
-      :name: gwdatafind-datasets-ligo-livingston
+    from gwdatafind import find_types
+    >>> print(find_types("L", host="datafind.gw-openscience.org"))
+    ['L1_GWOSC_O3a_16KHZ_R1',
+     'L1_GWOSC_O2_16KHZ_R1',
+     'L1_GWOSC_O3a_4KHZ_R1',
+     'L1_GWOSC_O2_4KHZ_R1',
+     'L1_LOSC_16_V1',
+     'L1_LOSC_4_V1',
+     'L1_GWOSC_O3b_16KHZ_R1',
+     'L1_GWOSC_O3b_4KHZ_R1',
+    ]
 
-      ========================  =====================================================
-      Dataset (frametype)       Description
-      ========================  =====================================================
-      ``L1_R``                  All auxiliary channels, stored at the native sampling
-                                rate
-      ``L1_T``                  Second trends of all channels, including
-                                ``.mean``, ``.min``, and ``.max``
-      ``L1_M``                  Minute trends of all channels, including
-                                ``.mean``, ``.min``, and ``.max``
-      ``L1_HOFT_C00``           Strain *h(t)* and metadata generated using the
-                                real-time calibration pipeline
-      ``L1_HOFT_CXY``           Strain *h(t)* and metadata generated using the
-                                off-line calibration pipeline at version ``XY``
-      ``L1_GWOSC_O2_4KHZ_R1``   4k Hz Strain *h(t)* and metadata as released by
-                                |GWOSC|_ for the O2 data release
-      ``L1_GWOSC_O2_16KHZ_R1``  16k Hz Strain *h(t)* and metadata as released by
-                                |GWOSC|_ for the O2 data release
-      ========================  =====================================================
+File URLs for specific times can be discovered using the
+:external+gwdatafind:func:`gwdatafind.find_urls` function:
 
-.. tabbed:: Virgo
+.. code-block:: python
+    :caption: Listing GWOSC datasets with GWDataFind
 
-   .. table:: Virgo datasets available with |gwdatafind|_
-      :name: gwdatafind-datasets-virgo
+    from gwdatafind import find_urls
+    >>> print(find_urls(
+    ...     "L",
+    ...     "L1_GWOSC_O3a_16KHZ_R1",
+    ...     1238163456,
+    ...     1238163466,
+    ...     host="datafind.gw-openscience.org",
+    ... ))
+    ['file://localhost/cvmfs/gwosc.osgstorage.org/gwdata/O3a/strain.16k/frame.v1/L1/1237319680/L-L1_GWOSC_O3a_16KHZ_R1-1238163456-4096.gwf']
 
-      ========================  =====================================================
-      Dataset (frametype)       Description
-      ========================  =====================================================
-      ``raw``                   All auxiliary channels, stored at the native sampling
-                                rate
-      ``V1O2Repro1A``           Strain *h(t)* and metadata for Observing run 3
-                                (``O3``) generated off-line using version ``1A``
-                                calibration; replace ``O2`` and ``1A`` as appropriate
-      ``V1_GWOSC_O2_4KHZ_R1``   4k Hz Strain *h(t)* and metadata as released by
-                                |GWOSC|_ for the O2 data release
-      ``V1_GWOSC_O2_16KHZ_R1``  16k Hz Strain *h(t)* and metadata as released by
-                                |GWOSC|_ for the O2 data release
-      ========================  =====================================================
+If CVMFS is properly configured this file can be read directly using
+:meth:`TimeSeries.read` similarly to any other data.
 
-.. admonition:: Not all datasets are available everywhere
+For more details on configuring CVMFS to read GWOSC data, see
 
-   Not all datasets are available from all datafind servers.  Each LIGO Lab-operated
-   computing centre has its own datafind server with a subset of the available
-   datasets.
+https://computing.docs.ligo.org/guide/cvmfs/#gwosc.osgstorage.org
 
-.. _gwpy-timeseries-datafind-trends:
+----------------
+Proprietary data
+----------------
 
-***************
+Proprietary data for the current generation of gravitational wave observatories
+are distributed between various computing centres and a restricted CVMFS
+distribution, and can all be discovered using GWDataFind.
+
+For more details on access to proprietary data, see
+
+https://computing.docs.ligo.org/guide/data/
+
+---------------
 LIGO trend data
-***************
+---------------
 
 The LIGO observatories produce second- and minute- trends of all channels
 automatically, and store them in the ``{H,L}1_T`` (second) and ``{H,L}1_M``
@@ -231,15 +219,16 @@ method call, or you can use a suffix in the channel name:
 e.g.
 
 .. code-block:: python
+    :caption: Accessing minute-trend data using :meth:`TimeSeries.get`
 
-   >>> TimeSeries.get("L1:IMC-PWR_IN_OUT_DQ.mean,s-trend", 1186741850, 1186741870)
+    TimeSeries.get("L1:IMC-PWR_IN_OUT_DQ.mean,s-trend", 1186741850, 1186741870)
 
 will specifically access the second trends of power incident on the
 LIGO-Livingston IMC.
 
-**************************
+==========================
 :meth:`TimeSeriesDict.get`
-**************************
+==========================
 
 :meth:`TimeSeries.get` can only retrieve data for a single channel at a time.
 Looping over a list of names to get data for many channels can be very slow,
