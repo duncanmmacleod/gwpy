@@ -2,9 +2,9 @@
 
 .. _gwpy-astro:
 
-#######################
-Astrophysical modelling
-#######################
+########################################
+Astrophysical modelling (``gwpy.astro``)
+########################################
 
 Currently the only methods available from `gwpy.astro` are concerned with calculating sensitive distance.
 
