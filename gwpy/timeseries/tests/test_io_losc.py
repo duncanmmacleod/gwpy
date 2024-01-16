@@ -46,7 +46,7 @@ def gw150914_hdf5():
         sample_rate=4096,
         format="hdf5",
     )
-    return download_file(url, cache=GWPY_CACHE)
+    return download_file(url, cache=GWPY_CACHE, pkgname="gwpy")
 
 
 def test_read_hdf5_gwosc(gw150914_hdf5):

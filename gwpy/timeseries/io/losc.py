@@ -59,10 +59,22 @@ GWOSC_LOCATE_KWARGS = (
 
 # -- utilities ----------------------------------------------------------------
 
-def _download_file(url, cache=None, verbose=False):
+def _download_file(
+    url,
+    cache=None,
+    pkgname="gwpy",
+    verbose=False,
+):
+    """Download a file.
+    """
     if cache is None:
         cache = bool_env('GWPY_CACHE', False)
-    return get_readable_fileobj(url, cache=cache, show_progress=verbose)
+    return get_readable_fileobj(
+        url,
+        cache=cache,
+        pkgname=pkgname,
+        show_progress=verbose,
+    )
 
 
 def _fetch_gwosc_data_file(url, *args, **kwargs):
