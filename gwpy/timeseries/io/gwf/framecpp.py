@@ -561,7 +561,7 @@ def write(
     outfile: str | Path | IO,
     start: LIGOTimeGPS,
     end: LIGOTimeGPS,
-    frame_duration: LIGOTimeGPS,
+    frame_duration: LIGOTimeGPS = 0.,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -602,8 +602,8 @@ def write(
         # append channels
         for i, key in enumerate(tsdict):
             ctype = (
-                type or
-                getattr(tsdict[key].channel, "_ctype", "proc").lower()
+                type
+                or getattr(tsdict[key].channel, "_ctype", "proc").lower()
                 or "proc"
             )
             if ctype == "adc":
@@ -613,7 +613,7 @@ def write(
             _append_to_frame(
                 frame,
                 tsdict[key].crop(f_start, f_end),
-                type=ctype,
+                ctype=ctype,
                 **kw,
             )
 
@@ -623,7 +623,7 @@ def write(
     # write frames to file
     io_framecpp.write_frames(
         outfile,
-        [frames],
+        frames,
         compression=compression,
         compression_level=compression_level,
     )

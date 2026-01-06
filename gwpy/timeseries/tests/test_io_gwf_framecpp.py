@@ -83,13 +83,17 @@ def test_write_multiple_frames(int32ts, tmp_path):
     """Test use of multiple frames in one frame file"""
     tmp = tmp_path / "test.gwf"
     int32ts.write(tmp, format="gwf", backend="framecpp", type="adc", frame_duration=6)
-    istream = frameCPP.IFrameFStream(tmp)
+    mod_framecpp = pytest.importorskip("LDAStools.frameCPP")
+    istream = mod_framecpp.IFrameFStream(str(tmp))
     frame_count = 0
     while frame_count < 3:
-        frame = istream.ReadNextFrame()
-        if frame is None:
+        try:
+            frame = istream.ReadNextFrame()
+            if frame is None:
+                break
+            frame_count += 1
+        except IndexError:
             break
-        frame_count += 1
     assert frame_count == 2
     new = type(int32ts).read(tmp, "test", type="adc")
     assert new.duration == int32ts.duration
