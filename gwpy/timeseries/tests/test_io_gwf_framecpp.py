@@ -78,3 +78,18 @@ def test_read_write_frvect_name(tmp_path):
     data.write(tmp, format="gwf", backend="framecpp", type="proc")
     new = type(data).read(tmp, "test")
     assert_quantity_sub_equal(data, new, exclude=("channel",))
+
+def test_write_multiple_frames(int32ts, tmp_path):
+    """Test use of multiple frames in one frame file"""
+    tmp = tmp_path / "test.gwf"
+    int32ts.write(tmp, format="gwf", backend="framecpp", type="adc", frame_duration=6)
+    istream = frameCPP.IFrameFStream(tmp)
+    frame_count = 0
+    while frame_count < 3:
+        frame = istream.ReadNextFrame()
+        if frame is None:
+            break
+        frame_count += 1
+    assert frame_count == 2
+    new = type(int32ts).read(tmp, "test", type="adc")
+    assert new.duration == int32ts.duration
