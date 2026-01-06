@@ -561,6 +561,7 @@ def write(
     outfile: str | Path | IO,
     start: LIGOTimeGPS,
     end: LIGOTimeGPS,
+    frame_duration: LIGOTimeGPS,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -577,37 +578,52 @@ def write(
         )
     }
 
-    # create frame
-    frame = io_framecpp.create_frame(
-        time=start,
-        duration=duration,
-        name=name or "gwpy",
-        run=run,
-        ifos=ifos,
-    )
+    if not frame_duration or frame_duration > duration:  # Just make 1 frame
+        frame_duration = duration
+    frame_edges = numpy.arange(start, end, frame_duration)
+    if end not in frame_edges:
+        frame_edges = numpy.append(frame_edges, end)
 
-    # append channels
-    for i, key in enumerate(tsdict):
-        ctype = (
-            type
-            or getattr(tsdict[key].channel, "_ctype", "proc").lower()
-            or "proc"
-        )
-        if ctype == "adc":
-            kw = {"channelid": i}
-        else:
-            kw = {}
-        _append_to_frame(
-            frame,
-            tsdict[key].crop(start, end),
-            ctype=ctype,
-            **kw,
+    frames = []
+    for f_start, f_end in zip(frame_edges[:-1], frame_edges[1:]):
+        f_start = LIGOTimeGPS(f_start)
+        f_end = LIGOTimeGPS(f_end)
+        f_duration = f_end - f_start
+
+        # create frame
+        frame = io_framecpp.create_frame(
+            time=f_start,
+            duration=f_duration,
+            name=name or "gwpy",
+            run=run,
+            ifos=ifos,
         )
 
-    # write frame to file
+        # append channels
+        for i, key in enumerate(tsdict):
+            ctype = (
+                type or
+                getattr(tsdict[key].channel, "_ctype", "proc").lower()
+                or "proc"
+            )
+            if ctype == "adc":
+                kw = {"channelid": i}
+            else:
+                kw = {}
+            _append_to_frame(
+                frame,
+                tsdict[key].crop(f_start, f_end),
+                type=ctype,
+                **kw,
+            )
+
+        # add frame to list of frames
+        frames.append(frame)
+
+    # write frames to file
     io_framecpp.write_frames(
         outfile,
-        [frame],
+        [frames],
         compression=compression,
         compression_level=compression_level,
     )
