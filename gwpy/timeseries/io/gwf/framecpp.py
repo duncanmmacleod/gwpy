@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import re
+import itertools
 from collections import defaultdict
 from math import ceil
 from typing import TYPE_CHECKING
@@ -561,7 +562,7 @@ def write(
     outfile: str | Path | IO,
     start: LIGOTimeGPS,
     end: LIGOTimeGPS,
-    frame_duration: LIGOTimeGPS = 0.,
+    frame_duration: float = 0.,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -578,17 +579,18 @@ def write(
         )
     }
 
-    if not frame_duration or frame_duration > duration:  # Just make 1 frame
+    if not frame_duration or frame_duration > float(duration):
+        # Just make file containing 1 frame
         frame_duration = duration
-    frame_edges = numpy.arange(start, end, frame_duration)
+    frame_edges = numpy.arange(start=start, stop=end, step=frame_duration)
     if end not in frame_edges:
-        frame_edges = numpy.append(frame_edges, end)
+        frame_edges = numpy.append(frame_edges, [end])
 
     frames = []
-    for f_start, f_end in zip(frame_edges[:-1], frame_edges[1:]):
-        f_start = LIGOTimeGPS(f_start)
-        f_end = LIGOTimeGPS(f_end)
-        f_duration = f_end - f_start
+    for f_edges in itertools.pairwise(frame_edges):
+        f_start = LIGOTimeGPS(f_edges[0])
+        f_end = LIGOTimeGPS(f_edges[1])
+        f_duration = f_edges[1] - f_edges[0]
 
         # create frame
         frame = io_framecpp.create_frame(

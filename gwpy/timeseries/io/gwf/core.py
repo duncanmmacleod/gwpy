@@ -551,7 +551,7 @@ def write_timeseriesdict(
         run=run,
         compression=compression,
         compression_level=compression_level,
-        **kw
+        **kw,
     )
 
 

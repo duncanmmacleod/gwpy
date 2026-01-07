@@ -80,7 +80,7 @@ def test_read_write_frvect_name(tmp_path):
     assert_quantity_sub_equal(data, new, exclude=("channel",))
 
 def test_write_multiple_frames(int32ts, tmp_path):
-    """Test use of multiple frames in one frame file"""
+    """Test use of multiple frames in one frame file."""
     tmp = tmp_path / "test.gwf"
     int32ts.write(tmp, format="gwf", backend="framecpp", type="adc", frame_duration=6)
     mod_framecpp = pytest.importorskip("LDAStools.frameCPP")
