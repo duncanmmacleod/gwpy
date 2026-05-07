@@ -113,7 +113,10 @@ NUM_THREADS = min(4, cpu_count() or 1)
 
 def _is_gwosc_channel(name: str | Channel) -> bool:
     """Check if a channel name looks like a GWOSC channel."""
-    return ":GWOSC-" in str(name)
+    return (
+        ":GWOSC-" in str(name)
+        or ":LOSC-" in str(name)
+    )
 
 
 def _all_gwosc_channels(channels: Iterable[str | Channel]) -> bool:
