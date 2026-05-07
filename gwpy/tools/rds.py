@@ -44,12 +44,12 @@ if TYPE_CHECKING:
 logger = _utils.get_logger(__name__)
 
 EXAMPLES = {
-    "Get data for GW150914": " ".join((  # noqa: FLY002
+    "Get GWOSC data for GW150914": " ".join((  # noqa: FLY002
         "gwpy-rds",
         "1126259462",
         "1126259522",
-        "H1:GWOSC-4KHZ_R1_STRAIN",
-        "L1:GWOSC-4KHZ_R1_STRAIN",
+        "H1",
+        "L1",
         "-o gw150914.gwf",
         "-O version=4",
     )),
