@@ -41,6 +41,11 @@ from astropy.units import Quantity
 from gwosc.api import DEFAULT_URL as DEFAULT_GWOSC_URL
 from gwosc.locate import get_urls
 
+try:
+    from gwosc.datasets import _iter_datasets as find_datasets
+except ImportError:  # private function not available
+    from gwosc.datasets import find_datasets
+
 from ...detector import Channel
 from ...detector.units import parse_unit
 from ...io import (
@@ -69,6 +74,7 @@ if TYPE_CHECKING:
     from collections.abc import (
         Collection,
         Iterable,
+        Iterator,
     )
     from typing import (
         IO,
@@ -257,8 +263,110 @@ def _name_from_gwosc_hdf5(
 
 # -- remote data access (the main event)
 
-def fetch_gwosc_data(
+def _find_gwosc_datasets(
     detector: str,
+    start: int,
+    end: int,
+    dataset: str | None,
+    version: int | None,
+    host: str,
+) -> Iterator[str]:
+    """Find the names of GWOSC datasets that overlap a GPS time span.
+
+    Currently just a wrapper around `gwosc.datasets.find_datasets`,
+    but could be extended to do some filtering.
+    """
+    for dstype in ("event", "run"):
+        yield from find_datasets(
+            detector=detector,
+            type=dstype,
+            segment=(start, end),
+            match=dataset,
+            version=version,
+            host=host,
+        )
+
+
+def _fetch_gwosc_dataset(
+    dataset: str | None,
+    detector: str,
+    start: int,
+    end: int,
+    span: Segment,
+    version: int | None,
+    sample_rate: int,
+    format: str,  # noqa: A002
+    host: str,
+    series_class: type[T],
+    **kwargs,
+) -> T:
+    """Fetch and read GWOSC data for a single named dataset.
+
+    This queries GWOSC for the URLs relevant to ``dataset`` and reads
+    the resulting file(s), it does not attempt any other dataset if
+    the read fails, e.g. because ``channel`` isn't included in
+    ``dataset``.
+    """
+    urls = get_urls(
+        detector,
+        start,
+        end,
+        dataset=dataset,
+        version=version,
+        sample_rate=sample_rate,
+        format=format,
+        host=host,
+    )
+    cache = sieve_cache(urls, segment=span)
+
+    # if event dataset, pick shortest file that covers the request
+    # -- this is a bit hacky, and presumes that only an event dataset
+    # -- would be produced with overlapping files.
+    # -- This should probably be improved to use dataset information
+    if len(cache) and _overlapping(cache):
+        cache.sort(key=lambda x: abs(file_segment(x)))
+        for url in cache:
+            a, b = file_segment(url)
+            if a <= start and b >= end:
+                cache = [url]
+                break
+    logger.debug(
+        "Fetched %d URLs from %s for %s[%s .. %s)",
+        len(cache),
+        urlparse(cache[0]).netloc,
+        f"dataset {dataset} in interval " if dataset else "",
+        start,
+        end,
+    )
+
+    is_gwf = cache[0].endswith(".gwf")
+    args: tuple[str | Channel | None, ...]
+    if is_gwf and cache:
+        args = (kwargs.pop("channel", None),)
+    else:
+        args = ()
+
+    # read data
+    out = None
+    kwargs["series_class"] = series_class
+    for url in cache:
+        keep = file_segment(url) & span
+        kwargs["start"], kwargs["end"] = keep
+        new = _fetch_gwosc_data_file(url, *args, **kwargs)
+        if is_gwf and (not args or args[0] is None):
+            args = (new.name,)
+        if out is None:
+            out = new.copy()
+        else:
+            out.append(new, resize=True)
+    if out is None:
+        msg = f"No data found for {detector} in dataset {dataset!r}"
+        raise ValueError(msg)
+    return out
+
+
+def fetch_gwosc_data(
+    name: str | Channel,
     start: SupportsToGps,
     end: SupportsToGps,
     dataset: str | None = None,
@@ -275,8 +383,9 @@ def fetch_gwosc_data(
 
     Parameters
     ----------
-    detector : `str`
-        The two-character prefix of the IFO in which you are interested,
+    name : `str`, `~gwpy.detector.Channel`
+        The name of the channel to fetch, e.g. ``'H1:GWOSC-4KHZ_R1_STRAIN'``,
+        or the two-character prefix of the IFO in which you are interested,
         e.g. `'L1'`.
 
     start : `~gwpy.time.LIGOTimeGPS`, `float`, `str`, optional
@@ -368,6 +477,11 @@ def fetch_gwosc_data(
             stacklevel=2,
         )
 
+    # get detector prefix from channel name
+    detector = str(name).split(":", maxsplit=1)[0]
+    if detector != str(name):
+        kwargs["channel"] = name
+
     # strip out arguments for other formats
     for key in IGNORE_GET_KWARGS:
         kwargs.pop(key, None)
@@ -376,68 +490,57 @@ def fetch_gwosc_data(
     start = to_gps(start)
     end = to_gps(end)
     span: Segment[float] = Segment(start, end)
-
-    # find URLs (requires python-gwosc)
+    istart = int(start)
+    iend = ceil(end)
     sample_rate = int(Quantity(sample_rate, "Hz").value)
-    urls = get_urls(
+
+    # find the datasets that might have the data we want (requires
+    # python-gwosc); the user's channel name may only exist in one of
+    # several datasets that otherwise cover this span, so try each in
+    # turn and return on the first one that actually works
+    dataset_names = list(_find_gwosc_datasets(
         detector,
-        int(start),
-        ceil(end),
-        dataset=dataset,
-        version=version,
-        sample_rate=sample_rate,
-        format=format,
-        host=host,
-    )
-    cache = sieve_cache(urls, segment=span)
+        istart,
+        iend,
+        dataset,
+        version,
+        host,
+    )) or [dataset]
 
-    # if event dataset, pick shortest file that covers the request
-    # -- this is a bit hacky, and presumes that only an event dataset
-    # -- would be produced with overlapping files.
-    # -- This should probably be improved to use dataset information
-    if len(cache) and _overlapping(cache):
-        cache.sort(key=lambda x: abs(file_segment(x)))
-        for url in cache:
-            a, b = file_segment(url)
-            if a <= start and b >= end:
-                cache = [url]
-                break
-    logger.debug(
-        "Fetched %d URLs from %s for [%s .. %s])",
-        len(cache),
-        urlparse(cache[0]).netloc,
-        start,
-        ceil(end),
-    )
+    errors: list[Exception] = []
+    for dset in dataset_names:
+        try:
+            return _fetch_gwosc_dataset(
+                dset,
+                detector,
+                istart,
+                iend,
+                span,
+                version,
+                sample_rate,
+                format,
+                host,
+                series_class,
+                **dict(kwargs),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(
+                "Failed to fetch %s data for %r from GWOSC dataset %r: %s",
+                detector,
+                name,
+                dset,
+                exc,
+            )
+            errors.append(exc)
 
-    is_gwf = cache[0].endswith(".gwf")
-    args: tuple[str | Channel | None, ...]
-    if is_gwf and cache:
-        args = (kwargs.pop("channel", None),)
-    else:
-        args = ()
-
-    # read data
-    out = None
-    kwargs["series_class"] = series_class
-    for url in cache:
-        keep = file_segment(url) & span
-        kwargs["start"], kwargs["end"] = keep
-        new = _fetch_gwosc_data_file(url, *args, **kwargs)
-        if is_gwf and (not args or args[0] is None):
-            args = (new.name,)
-        if out is None:
-            out = new.copy()
-        else:
-            out.append(new, resize=True)
-    if out is None:
-        msg = f"No data found for {detector} in [{start} .. {end})"
-        raise ValueError(msg)
-    return out
+    msg = f"No data found for {name} in [{start} .. {end})"
+    if errors:
+        msg += f", last error: {errors[-1]}"
+    raise ValueError(msg)
 
 
 def fetch_dict(
-    detectors: Collection[str | Channel],
+    names: Collection[str | Channel],
     start: SupportsToGps,
     end: SupportsToGps,
     dataset: str | None = None,
@@ -453,9 +556,9 @@ def fetch_dict(
 
     Parameters
     ----------
-    detectors : `list` of `str`
-        List of two-character prefices of the IFOs in which you
-        are interested, e.g. `['H1', 'L1']`.
+    names : `list` of `str`
+        List of channel names or detector prefices for which you want
+        to fetch data.
 
     start : `~gwpy.time.LIGOTimeGPS`, `float`, `str`
         GPS start time of required data,
@@ -527,13 +630,12 @@ def fetch_dict(
                 name='Strain',
                 channel=None)>})
     """  # noqa: E501
-    names = {str(x).split(":", maxsplit=1)[0]: x for x in detectors}
-    parallel = min(len(detectors), parallel or 1)
+    parallel = min(len(names), parallel or 1)
 
-    def _fod(ifo: str) -> tuple[str, TimeSeriesBase]:
+    def _fod(name: str | Channel) -> tuple[str | Channel, TimeSeriesBase]:
         """Fetch data for a single detector."""
-        return ifo, fetch_gwosc_data(
-            ifo,
+        return name, fetch_gwosc_data(
+            name,
             start,
             end,
             dataset=dataset,
@@ -549,10 +651,10 @@ def fetch_dict(
     # fetch all data in a thread pool
     out = series_class.DictClass()
     with ThreadPoolExecutor(max_workers=parallel) as pool:
-        futures = [pool.submit(_fod, ifo) for ifo in names]
+        futures = [pool.submit(_fod, name) for name in names]
         for future in as_completed(futures):
-            ifo, data = future.result()
-            out[name := names[ifo]] = data
+            name, data = future.result()
+            out[name] = data
             logger.debug("Fetched data for %s", name)
 
     return out
@@ -567,6 +669,7 @@ def read_gwosc_hdf5(
     start: SupportsToGps | None = None,
     end: SupportsToGps | None = None,
     *,
+    channel: str | Channel | None = None,
     copy: bool = False,
 ) -> TimeSeries:
     """Read a `TimeSeries` from a GWOSC-format HDF file.
@@ -585,6 +688,9 @@ def read_gwosc_hdf5(
     end : `Time`, `~gwpy.time.LIGOTimeGPS`, optional
         end GPS time of desired data
 
+    channel : `str`, `~gwpy.detector.Channel`, optional
+        Channel name to check against the dataset name.
+
     copy : `bool`, default: `False`
         create a fresh-memory copy of the underlying array
 
@@ -592,8 +698,18 @@ def read_gwosc_hdf5(
     -------
     data : `~gwpy.timeseries.TimeSeries`
         a new `TimeSeries` containing the data read from disk
+
+    Raises
+    ------
+    ValueError
+        If ``channel`` is given, and the ``GWOSCmeta`` dataset
+        value doesn't match (or cannot be found).
     """
     dataset = io_hdf5.find_dataset(h5f, path)
+    name = _name_from_gwosc_hdf5(dataset)
+    if channel is not None and str(channel) != name:
+        msg = f"Channel {channel!r} does not match dataset name {name!r}"
+        raise ValueError(msg)
     # read data
     nddata = dataset[()]
     # read metadata
@@ -602,7 +718,6 @@ def read_gwosc_hdf5(
     dt = Quantity(dataset.attrs["Xspacing"], xunit)
     unit = dataset.attrs["Yunits"]
     # build and return
-    name = _name_from_gwosc_hdf5(dataset)
     return TimeSeries(
         nddata,
         epoch=epoch,
@@ -734,8 +849,7 @@ def identify_gwosc_sources(
 
     # Set priority (and format) based on channel names
     priority = 10
-    if format is None and _all_gwosc_channels(names):
-        format = "gwf"  # noqa: A001
+    if _any_gwosc_channels(names):
         priority = 5  # user mentioned GWOSC, use it if we can
     elif any(":" in str(c) for c in channels):
         priority = 1000  # GWOSC almost certainly won't be able to help
