@@ -535,23 +535,17 @@ def write_timeseriesdict(
     else:
         endgps = to_gps(end)
 
-    # only support multiple frames in one file with frameCPP
-    kw = {}
-    if backend:
-        if backend.lower() == "framecpp":
-            kw = {"frame_duration": frame_duration}
-
     write_func(
         seriesdict,
         target,
         startgps,
         endgps,
+        frame_duration=frame_duration,
         type=type,
         name=name,
         run=run,
         compression=compression,
         compression_level=compression_level,
-        **kw,
     )
 
 
