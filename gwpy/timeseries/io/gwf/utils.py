@@ -20,10 +20,18 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 
+import numpy
+
+from ....segments import Segment
+
 if TYPE_CHECKING:
-    from typing import TypeVar
+    from typing import (
+        SupportsFloat,
+        TypeVar,
+    )
 
     _T = TypeVar("_T")
 
@@ -89,3 +97,26 @@ def _channel_dict_kwarg(
 
     # repeat value for all channels
     return dict.fromkeys(channels, value)
+
+
+def _frame_segments(
+    start: SupportsFloat,
+    end: SupportsFloat,
+    step: float | None,
+) -> list[Segment]:
+    """Return a list of segments for each frame to be written.
+
+    This just splits the given time range into segments of the given duration,
+    ensuring that the full span is covered.
+    """
+    duration = float(end) - float(start)
+    if not step or step > duration:
+        return [Segment(start, end)]
+
+    edges = numpy.arange(start=start, stop=end, step=step)
+    if end not in edges:
+        edges = numpy.append(edges, [end])
+
+    return [
+        Segment(edge[0], edge[1]) for edge in itertools.pairwise(edges)
+    ]

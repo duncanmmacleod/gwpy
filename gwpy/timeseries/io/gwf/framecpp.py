@@ -21,7 +21,6 @@
 from __future__ import annotations
 
 import re
-import itertools
 from collections import defaultdict
 from math import ceil
 from typing import TYPE_CHECKING
@@ -43,7 +42,10 @@ from ... import (
     TimeSeriesBaseList,
 )
 from ...core import _dynamic_scaled
-from .utils import _channel_dict_kwarg
+from .utils import (
+    _channel_dict_kwarg,
+    _frame_segments,
+)
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -562,7 +564,7 @@ def write(
     outfile: str | Path | IO,
     start: LIGOTimeGPS,
     end: LIGOTimeGPS,
-    frame_duration: float = 0.,
+    frame_duration: float | None = None,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -570,7 +572,6 @@ def write(
     compression_level: int | None = None,
 ) -> None:
     """Write data to a GWF file using the frameCPP API."""
-    duration = end - start
     ifos = {
         ts.channel.ifo for ts in tsdict.values() if (
             ts.channel
@@ -579,23 +580,14 @@ def write(
         )
     }
 
-    if not frame_duration or frame_duration > float(duration):
-        # Just make file containing 1 frame
-        frame_duration = duration
-    frame_edges = numpy.arange(start=start, stop=end, step=frame_duration)
-    if end not in frame_edges:
-        frame_edges = numpy.append(frame_edges, [end])
-
     frames = []
-    for f_edges in itertools.pairwise(frame_edges):
-        f_start = LIGOTimeGPS(f_edges[0])
-        f_end = LIGOTimeGPS(f_edges[1])
-        f_duration = f_edges[1] - f_edges[0]
+    for seg in _frame_segments(start, end, frame_duration):
+        fstart, fend = seg
 
         # create frame
         frame = io_framecpp.create_frame(
-            time=f_start,
-            duration=f_duration,
+            time=fstart,
+            duration=abs(seg),
             name=name or "gwpy",
             run=run,
             ifos=ifos,
@@ -614,7 +606,7 @@ def write(
                 kw = {}
             _append_to_frame(
                 frame,
-                tsdict[key].crop(f_start, f_end),
+                tsdict[key].crop(fstart, fend),
                 ctype=ctype,
                 **kw,
             )
