@@ -1,3 +1,4 @@
+# Copyright 2026 Cardiff University
 # Stubs for the SWIG-generated `lalframe` module used by GWpy.
 
 # ruff: noqa: N802, N803

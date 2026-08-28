@@ -1,3 +1,4 @@
+# Copyright 2026 Cardiff University
 # Stubs for the SWIG-generated `lal` module used by GWpy.
 # Minimal surface area: only symbols referenced by gwpy.utils.lal and related code.
 
