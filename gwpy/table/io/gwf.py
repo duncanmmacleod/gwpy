@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import IO
 
-    from LDASTools.frameCPP import FrEvent
+    from LDAStools.frameCPP import FrEvent
 
     from ..filter import FilterSpec
 
