@@ -446,9 +446,6 @@ class GPSScale(GPSMixin, LinearScale):
 
     Parameters
     ----------
-    axis : `matplotlib.axis.Axis`.
-        The axis to scale.
-
     unit : `astropy.units.Unit`, optional
         The unit to use for ticks on the axis.
 
@@ -462,18 +459,28 @@ class GPSScale(GPSMixin, LinearScale):
 
     def __init__(
         self,
-        axis: Axis,
+        _axis: Axis | None = None,
+        *,
         unit: UnitBase | None = None,
         epoch: Number | Decimal | SupportsToGps | None = None,
     ) -> None:
-        """Initialise this `GPSScale`."""
+        """Initialise this `GPSScale`.
+
+        The leading positional argument is accepted only for
+        compatibility with matplotlib < 3.11, which always passes the
+        `~matplotlib.axis.Axis` to scale constructors positionally;
+        matplotlib >= 3.11 does not, and the axis is instead bound in
+        `set_default_locators_and_formatters`, which every version of
+        matplotlib calls immediately after constructing the scale.
+        """
         super().__init__(unit=unit, epoch=epoch)
-        self.axis = axis
-        # set tight scaling on parent axes
-        getattr(axis.axes, f"set_{axis.axis_name}margin")(0)
+        self.axis = _axis
 
     def set_default_locators_and_formatters(self, axis: Axis) -> None:
         """Set the defualt locators and formatters for ``axis``."""
+        self.axis = axis
+        # set tight scaling on parent axes
+        getattr(axis.axes, f"set_{axis.axis_name}margin")(0)
         axis.set_major_locator(GPSAutoLocator())
         axis.set_major_formatter(GPSFormatter())
         axis.set_minor_locator(GPSAutoMinorLocator())
@@ -578,10 +585,11 @@ def _gps_scale_factory(unit: UnitBase) -> type[GPSScale]:
 
         def __init__(
             self,
-            axis: Axis,
+            _axis: Axis | None = None,
+            *,
             epoch: Number | Decimal | SupportsToGps | None = None,
         ) -> None:
-            super().__init__(axis, epoch=epoch, unit=unit)
+            super().__init__(_axis, epoch=epoch, unit=unit)
 
     return FixedGPSScale
 
