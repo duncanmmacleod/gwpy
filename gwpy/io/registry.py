@@ -179,7 +179,7 @@ def _list_identifier(
             IndexError,  # empty list
             ValueError,  # target can't be resolved as a list of file-like
         ):
-            filepath = file_list(target)[0]  # type: ignore[arg-type]
+            filepath = file_list(target)[0]
         return identifier(origin, filepath, fileobj, *args, **kwargs)
 
     return decorated_func
@@ -205,7 +205,7 @@ class UnifiedIORegistry(astropy_registry.UnifiedIORegistry):
                 IndexError,  # list is empty
                 ValueError,  # failed to parse as list-like
             ):
-                path = file_list(path)[0]  # type: ignore[arg-type]
+                path = file_list(path)[0]
         return super().identify_format(
             origin,
             data_class_required,
@@ -293,9 +293,7 @@ class UnifiedRead(astropy_registry.UnifiedReadWrite, ABC, Generic[T]):
             The sequence of items to merge.
         **kwargs
             Additional keyword arguments specific to the merge operation.
-            Subclasses may override this method with specific named parameters;
-            use ``# type: ignore[override]`` to suppress mypy warnings about
-            signature compatibility.
+            Subclasses may override this method with specific named parameters.
 
         Returns
         -------
@@ -563,7 +561,7 @@ class UnifiedFetch(UnifiedRead[T], Generic[T]):
             registry=registry,
         )
 
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         *args,  # noqa: ANN002
         source: str | None = None,
@@ -758,7 +756,7 @@ class UnifiedGet(UnifiedFetch, Generic[T]):
         )
         self.logger = logging.getLogger(module or cls.__module__)
 
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         *args,
         source: str | list[str | dict[str, Any]] | None = None,
@@ -857,8 +855,8 @@ def inherit_unified_io(klass: type) -> type:
     modified independently of the parent.
     """
     parent = klass.__mro__[1]
-    parent_registry = parent.read.registry  # type: ignore[attr-defined]
-    child_registry = klass.read.registry  # type: ignore[attr-defined]
+    parent_registry = parent.read.registry
+    child_registry = klass.read.registry
     for row in parent_registry.get_formats(data_class=parent):
         name = row["Format"]
 

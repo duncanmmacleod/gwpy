@@ -470,7 +470,7 @@ def _create_series(
     To cover a gap in data returned from NDS.
     """
     channel = Channel.from_nds2(ndschan)
-    nsamp = int((end - start) * channel.sample_rate.value)  # type: ignore[union-attr]
+    nsamp = int((end - start) * channel.sample_rate.value)
     return series_class(
         numpy_ones(nsamp) * value,
         t0=start,

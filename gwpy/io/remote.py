@@ -324,7 +324,7 @@ def _handle_remote_file(
         pelican_get = io_pelican.download_file
     else:
         get = astropy_data.get_readable_fileobj
-        pelican_get = io_pelican.open_remote_file  # type: ignore[assignment]
+        pelican_get = io_pelican.open_remote_file
 
     if cache is None:
         cache = bool_env("GWPY_CACHE", default=False)

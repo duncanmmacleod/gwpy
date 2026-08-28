@@ -142,7 +142,7 @@ class _Nds2Enum(enum.IntFlag):
         name = str(name)
         # if given a number, use it
         if name.isdigit():
-            return cls(int(name))  # type: ignore[call-arg]
+            return cls(int(name))
         # otherwise we might have been given a registered name
         try:
             return cls[name.upper()]
@@ -179,7 +179,7 @@ class Nds2DataType(NumpyTypeEnum, _Nds2Enum):
             return super().find(name)
         except ValueError:
             # Return unknown
-            return cls(0)  # type: ignore[call-arg]
+            return cls(0)
 
     UNKNOWN = (0, "UNKNOWN")
     INT16 = (1, "int_2")
@@ -663,7 +663,7 @@ def _find_channel(
     # if two results, remove 'online' copy (if present)
     #    (if no online channels present, this does nothing)
     if len(found) == 2:  # noqa: PLR2004
-        online = Nds2ChannelType.ONLINE.value  # type: ignore[attr-defined]
+        online = Nds2ChannelType.ONLINE.value
         found = [c for c in found if c.channel_type != online]
 
     # if not unique result, panic
@@ -694,8 +694,8 @@ def _strip_ctype(
 
     # NDS1 stores channels with trend suffix, so we put it back:
     if protocol == 1 and ctype in (
-        Nds2ChannelType.STREND.value,  # type: ignore[attr-defined]
-        Nds2ChannelType.MTREND.value,  # type: ignore[attr-defined]
+        Nds2ChannelType.STREND.value,
+        Nds2ChannelType.MTREND.value,
     ):
         name += f",{ctypestr}"
 

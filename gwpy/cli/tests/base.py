@@ -109,7 +109,7 @@ class _TestCliProduct(Generic[CliProductType]):
     """Test the `CliProduct` class."""
 
     ACTION: ClassVar[str | None] = None
-    TEST_CLASS: ClassVar[type[cliproduct.CliProduct]] = cliproduct.CliProduct  # type: ignore[type-abstract]
+    TEST_CLASS: ClassVar[type[cliproduct.CliProduct]] = cliproduct.CliProduct
     TEST_ARGS: ClassVar[list[str]] = [
         "--chan", "X1:TEST-CHANNEL",
         "--start", "0",
@@ -261,7 +261,7 @@ class _TestCliProduct(Generic[CliProductType]):
         else:
             result = cast("TimeSeries", getattr(ts, ftype)(filt[ftype]))
 
-        fts = dataprod._filter_timeseries(ts, **filt)  # type: ignore[arg-type]
+        fts = dataprod._filter_timeseries(ts, **filt)
         utils.assert_quantity_sub_equal(fts, result)
 
     @pytest.mark.parametrize(("params", "title"), [
@@ -377,7 +377,7 @@ class _TestCliProduct(Generic[CliProductType]):
 class _TestImageProduct(_TestCliProduct[ImageProductType], Generic[ImageProductType]):
     """Test the `ImageProduct` class."""
 
-    TEST_CLASS: ClassVar[type[cliproduct.ImageProduct]] = cliproduct.ImageProduct  # type: ignore[type-abstract]
+    TEST_CLASS: ClassVar[type[cliproduct.ImageProduct]] = cliproduct.ImageProduct
 
     def test_extra_plot_options(self, args: Namespace):
         """Test `ImageProduct.extra_plot_options`."""
@@ -413,7 +413,7 @@ class _TestTimeDomainProduct(
     """Test the `TimeDomainProduct` class."""
 
     TEST_CLASS: ClassVar[type[cliproduct.TimeDomainProduct]] = (
-        cliproduct.TimeDomainProduct  # type: ignore[type-abstract]
+        cliproduct.TimeDomainProduct
     )
 
 
@@ -424,5 +424,5 @@ class _TestFrequencyDomainProduct(
     """Test the `FrequencyDomainProduct` class."""
 
     TEST_CLASS: ClassVar[type[cliproduct.FrequencyDomainProduct]] = (
-        cliproduct.FrequencyDomainProduct  # type: ignore[type-abstract]
+        cliproduct.FrequencyDomainProduct
     )

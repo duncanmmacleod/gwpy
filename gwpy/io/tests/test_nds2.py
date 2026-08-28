@@ -96,7 +96,7 @@ class TestNds2DataType(
 ):
     """Tests of :class:`gwpy.io.nds2.Nds2DataType`."""
 
-    TEST_CLASS = io_nds2.Nds2DataType  # type: ignore[assignment]
+    TEST_CLASS = io_nds2.Nds2DataType
 
     def test_find_errors(self):
         """Test errors from :meth:`gwpy.io.nds2.Nds2DataType.find`."""
@@ -509,7 +509,7 @@ def test_get_nds2_name():
         (Channel("X1:TEST", type="m-trend"), "X1:TEST,m-trend"),
         (mocks.nds2_channel("X1:TEST", 16, "NONE"), "X1:TEST,raw"),
     ]:
-        assert io_nds2._get_nds2_name(channel) == name  # type: ignore[arg-type]
+        assert io_nds2._get_nds2_name(channel) == name
 
 
 @pytest.mark.requires("nds2")
@@ -525,4 +525,4 @@ def test_get_nds2_names():
         "X1:TEST,m-trend",
         "X1:TEST,raw",
     ]
-    assert list(io_nds2._get_nds2_names(channels)) == names  # type: ignore[arg-type]
+    assert list(io_nds2._get_nds2_names(channels)) == names

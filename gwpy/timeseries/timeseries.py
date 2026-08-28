@@ -3111,7 +3111,7 @@ class TimeSeries(TimeSeriesBase):
 class TimeSeriesDict(TimeSeriesBaseDict):
     """A dictionary of `TimeSeries` objects."""
 
-    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "TimeSeries")  # type: ignore[union-attr]
+    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "TimeSeries")
     EntryClass = TimeSeries
 
     read = UnifiedReadWriteMethod(TimeSeriesDictRead)
@@ -3122,5 +3122,5 @@ class TimeSeriesDict(TimeSeriesBaseDict):
 class TimeSeriesList(TimeSeriesBaseList):
     """A list of `TimeSeries` objects."""
 
-    __doc__ = TimeSeriesBaseList.__doc__.replace("TimeSeriesBase", "TimeSeries")  # type: ignore[union-attr]
+    __doc__ = TimeSeriesBaseList.__doc__.replace("TimeSeriesBase", "TimeSeries")
     EntryClass = TimeSeries

@@ -58,7 +58,7 @@ class ChannelListRead(UnifiedRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[ChannelList],
     ) -> ChannelList:

@@ -157,9 +157,9 @@ class FrequencySeries(Series):
 
     # -- FrequencySeries properties --
 
-    f0 = property_alias(Series.x0, "Starting frequency for this `FrequencySeries`")  # type: ignore[arg-type]
-    df = property_alias(Series.dx, "Frequency spacing of this `FrequencySeries`")  # type: ignore[arg-type]
-    frequencies = property_alias(Series.xindex, "Series of frequencies for each sample")  # type: ignore[arg-type]
+    f0 = property_alias(Series.x0, "Starting frequency for this `FrequencySeries`")
+    df = property_alias(Series.dx, "Frequency spacing of this `FrequencySeries`")
+    frequencies = property_alias(Series.xindex, "Series of frequencies for each sample")
 
     # -- FrequencySeries i/o ---------
 
@@ -178,7 +178,7 @@ class FrequencySeries(Series):
         # use log y-scale for ASD, PSD
         u = self.unit
         try:
-            hzpow = u.powers[u.bases.index(units.Hz)]  # type: ignore[union-attr]
+            hzpow = u.powers[u.bases.index(units.Hz)]
         except ValueError:
             pass
         else:

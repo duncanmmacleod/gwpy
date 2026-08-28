@@ -1109,7 +1109,7 @@ class Series(Array):
             else:
                 self.xindex[: -other.shape[0]] = self.xindex[other.shape[0] :]
             try:
-                self.xindex[-other.shape[0] :] = other._xindex  # type: ignore[union-attr]  # noqa: SLF001
+                self.xindex[-other.shape[0] :] = other._xindex  # noqa: SLF001
             except AttributeError:
                 del self.xindex
                 if not resize:

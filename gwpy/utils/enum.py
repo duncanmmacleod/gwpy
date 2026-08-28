@@ -56,7 +56,7 @@ class NumpyTypeEnum(Enum):
             if isinstance(type_, str):
                 type_ = type_.lower()
             try:
-                return cls[numpy.dtype(type_).name.upper()]  # type: ignore[arg-type]
+                return cls[numpy.dtype(type_).name.upper()]
             except (
                 KeyError,  # numpy dtype isn't support by this enum
                 TypeError,  # type isn't a valid numpy type

@@ -199,7 +199,7 @@ def test_notch_iir_quantities(notch_60):
 def test_notch_fir_notimplemented():
     """Test `notch()` with an FIR filter."""
     with pytest.raises(NotImplementedError):
-        filter_design.notch(60, 16384, type="fir")  # type: ignore[call-overload]
+        filter_design.notch(60, 16384, type="fir")
 
 
 def test_lowpass_iir(lowpass_100_iir):

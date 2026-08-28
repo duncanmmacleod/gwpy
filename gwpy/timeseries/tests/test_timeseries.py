@@ -277,10 +277,10 @@ class TestTimeSeries(_TestTimeSeriesBase[TimeSeriesType]):
         array.epoch = LIGOTimeGPS(10)
         assert array.t0.value == 10
 
-    def test_epoch(self):  # type: ignore[override]
+    def test_epoch(self):
         """Test `TimeSeries.epoch`."""
         array = self.create()
-        assert array.epoch.gps == array.x0.value  # type: ignore[union-attr]
+        assert array.epoch.gps == array.x0.value  # ty: ignore[unresolved-attribute]
 
     # -- test I/O --------------------
 

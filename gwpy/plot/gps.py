@@ -42,7 +42,7 @@ from matplotlib.transforms import Transform
 try:
     from matplotlib import _docstring
 except ImportError:  # maybe matplotlib >= 3.9?
-    _docstring = None  # type: ignore[assignment]
+    _docstring = None
 
 from ..time import (
     from_gps,
@@ -289,7 +289,7 @@ class _GPSTransformBase(GPSMixin, Transform):
         vdec = Decimal(_truncate(value, 12))
         edec = Decimal(_truncate(epoch, 12))
         sdec = Decimal(_truncate(scale, 12))
-        return type(value)(cls._transform(vdec, edec, sdec))  # type: ignore[arg-type]
+        return type(value)(cls._transform(vdec, edec, sdec))
 
 
 class GPSTransform(_GPSTransformBase):

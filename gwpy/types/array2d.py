@@ -393,7 +393,7 @@ class Array2D(Series):
             irregular_equal=irregular_equal,
         )
 
-    def value_at(  # type: ignore[override]
+    def value_at(
         self,
         x: QuantityLike,
         y: QuantityLike,

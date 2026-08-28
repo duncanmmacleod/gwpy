@@ -93,7 +93,7 @@ class TestArray(Generic[ArrayType]):
     def TEST_ARRAY(self) -> ArrayType:  # noqa: N802
         """Create a new instance of ``TEST_CLASS`` and return it."""
         try:
-            return self._TEST_ARRAY  # type: ignore[attr-defined]
+            return self._TEST_ARRAY
         except AttributeError:
             channel = Channel(
                 CHANNEL_NAME,
@@ -174,7 +174,7 @@ class TestArray(Generic[ArrayType]):
         assert array.name is None
 
         # but everything else gets str()
-        array.name = 4  # type: ignore[assignment]
+        array.name = 4
         assert array.name == "4"
 
     def test_epoch(self, array: ArrayType):
@@ -199,7 +199,7 @@ class TestArray(Generic[ArrayType]):
         # test precision at high GPS times (to millisecond)
         gps = LIGOTimeGPS(1234567890, 123456000)
         array = self.create(epoch=gps)
-        assert array.epoch.gps == float(gps)  # type: ignore[union-attr]
+        assert array.epoch.gps == float(gps)
 
         # test None gets preserved
         array.epoch = None
@@ -261,14 +261,14 @@ class TestArray(Generic[ArrayType]):
     def test_abs(self, array: ArrayType):
         """Test `Array.abs()`."""
         utils.assert_quantity_equal(
-            array.abs(),  # type: ignore[call-arg]
+            array.abs(),
             numpy.abs(array),
         )
 
     def test_median(self, array: ArrayType):
         """Test `Array.median()`."""
         utils.assert_quantity_equal(
-            array.median(),  # type: ignore[call-arg]
+            array.median(),
             numpy.median(array.value) * cast("units.UnitBase", array.unit),
         )
 

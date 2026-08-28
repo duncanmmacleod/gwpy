@@ -255,7 +255,7 @@ class Axes(_Axes):
         This method will fail if the current X-axis scale isn't one of
         the GPS scales. See :ref:`gwpy-plot-gps` for more details.
         """
-        return self.get_xaxis().get_transform().get_epoch()  # type: ignore[attr-defined]
+        return self.get_xaxis().get_transform().get_epoch()
 
     # -- overloaded plotting methods -
 
@@ -285,7 +285,7 @@ class Axes(_Axes):
 
         return super().scatter(x, y, s=s, c=c, **kwargs)
 
-    scatter.__doc__ = _Axes.scatter.__doc__.replace(  # type: ignore[union-attr]
+    scatter.__doc__ = _Axes.scatter.__doc__.replace(
         "marker :",
         "sortbycolor : `bool`, optional, default: False\n"
         "    Sort scatter points by `c` array value, if given.\n\n"
@@ -477,7 +477,7 @@ class Axes(_Axes):
 
         return super().hist(x, bins=bins, **kwargs)
 
-    hist.__doc__ = _Axes.hist.__doc__.replace(  # type: ignore[union-attr]
+    hist.__doc__ = _Axes.hist.__doc__.replace(
         "color :",
         "logbins : boolean, optional\n"
         "    If ``True``, use logarithmically-spaced histogram bins.\n\n"
@@ -653,7 +653,7 @@ class Axes(_Axes):
             numpy.fromiter(
                 (
                     _poly(*tile) for tile in
-                    zip(x, y, w, h, strict=True)  # type: ignore[arg-type]
+                    zip(x, y, w, h, strict=True)
                 ),
                 dtype=(float, (4, 2)),
                 count=numpy.shape(x)[0],
@@ -690,7 +690,7 @@ class Axes(_Axes):
         # create legend
         return super().legend(*args, **kwargs)
 
-    legend.__doc__ = _Axes.legend.__doc__.replace(  # type: ignore[union-attr]
+    legend.__doc__ = _Axes.legend.__doc__.replace(
         "Call signatures",
         """.. note::
 

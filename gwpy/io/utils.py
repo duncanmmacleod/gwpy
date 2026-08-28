@@ -212,8 +212,8 @@ def with_open(
                 # open the file, ...
                 with open(source, mode=mode) as fobj:  # noqa: PTH123
                     # replace the argument with the open file, ...
-                    args = list(args)  # type: ignore[assignment]
-                    args[pos] = fobj  # type: ignore[index]
+                    args = list(args)
+                    args[pos] = fobj
                     # and re-execute the function call
                     return func(*args, **kwargs)
             return func(*args, **kwargs)

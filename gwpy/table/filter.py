@@ -265,7 +265,7 @@ def is_filter_tuple(tup: object) -> bool:
     if isinstance(tup, FilterSpec):
         return True
     try:
-        names, func, _ = cast("tuple[str | tuple[str, ...], Callable, tuple]", tup)  # type: ignore[misc]
+        names, func, _ = cast("tuple[str | tuple[str, ...], Callable, tuple]", tup)
         return (
             (isinstance(names, str) or all(isinstance(x, str) for x in names))
             and callable(func)

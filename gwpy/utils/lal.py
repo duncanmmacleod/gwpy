@@ -126,15 +126,15 @@ def to_lal_type_str(pytype: type | DTypeLike | str | int) -> str:
     """
     # noop
     if pytype in LAL_TYPE_FROM_STR:
-        return pytype  # type: ignore[return-value]
+        return pytype
 
     # convert type code
     if pytype in LAL_TYPE_STR:
-        return LAL_TYPE_STR[pytype]  # type: ignore[index]
+        return LAL_TYPE_STR[pytype]
 
     # convert python type
     try:
-        dtp: type = numpy.dtype(pytype).type  # type: ignore[arg-type]
+        dtp: type = numpy.dtype(pytype).type
         return LAL_TYPE_STR_FROM_NUMPY[dtp]
     except (
         TypeError,  # failed to convert input to dtype

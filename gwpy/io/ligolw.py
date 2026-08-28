@@ -116,7 +116,7 @@ def strip_ilwdchar(content_handler: type[ContentHandler]) -> type[ContentHandler
     from igwn_ligolw.lsctables import TableByName
     from igwn_ligolw.types import FromPyType
 
-    class IlwdMapContentHandler(content_handler):  # type: ignore[misc,valid-type]
+    class IlwdMapContentHandler(content_handler):
 
         def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002
             super().__init__(*args, **kwargs)
@@ -179,7 +179,7 @@ def strip_ilwdchar(content_handler: type[ContentHandler]) -> type[ContentHandler
 def _wrap_content_handler(contenthandler: type[ContentHandler]) -> type[ContentHandler]:
 
     @strip_ilwdchar
-    class ContentHandler(contenthandler):  # type: ignore[misc,valid-type]
+    class ContentHandler(contenthandler):
         pass
 
     return ContentHandler
@@ -284,7 +284,7 @@ def build_content_handler(
         a new content handler that applies the filter function and the
         default parsing extras from :func:`_wrap_content_handler`.
     """
-    class ContentHandler(parent):  # type: ignore[misc,valid-type]
+    class ContentHandler(parent):
         def __init__(self, document: Document) -> None:
             super().__init__(document, filter_func)
 
@@ -625,7 +625,7 @@ def write_tables(
     if isinstance(target, FileLike):
         writer = ligolw_utils.write_fileobj
         try:
-            name = target.name  # type: ignore[union-attr]
+            name = target.name
         except AttributeError:
             name = ""
     else:

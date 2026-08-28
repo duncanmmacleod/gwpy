@@ -127,7 +127,7 @@ def test_is_cache_lal():
     """Test `is_cache()` with `lal.CacheEntry` objects."""
     cache = [io_cache.CacheEntry.from_T050017("/data/A-B-12345-6.txt")]
     assert io_cache.is_cache(cache)
-    assert not io_cache.is_cache([*cache, None])  # type: ignore[list-item]
+    assert not io_cache.is_cache([*cache, None])
 
 
 @pytest.mark.requires("glue.lal")

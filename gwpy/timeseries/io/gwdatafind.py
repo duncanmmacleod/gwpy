@@ -330,7 +330,7 @@ def find_dict(
         if ftype is None:
             msg = f"Cannot determine frametype for channel '{name}'"
             raise RuntimeError(msg)
-        groups.setdefault(ftype, []).append(name)  # type: ignore[arg-type]
+        groups.setdefault(ftype, []).append(name)
 
     logger.debug("Determined %s frametypes to read", len(groups))
 

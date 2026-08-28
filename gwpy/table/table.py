@@ -90,7 +90,7 @@ TIME_LIKE_COLUMN_NAMES = [
 def _rates_preprocess(func: Callable[P, R]) -> Callable[P, R]:
     @wraps(func)
     def wrapped_func(*args: P.args, **kwargs: P.kwargs) -> R:
-        self: EventTable = args[0]  # type: ignore[assignment]
+        self: EventTable = args[0]
         timecolumn = kwargs.get("timecolumn")
         start = cast("SupportsToGps | None", kwargs.get("start"))
         end = cast("SupportsToGps | None", kwargs.get("end"))

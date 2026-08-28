@@ -1111,7 +1111,7 @@ class FFTMixin:
     @classmethod
     def init_data_options(cls, parser: ArgumentParser) -> None:
         """Set up data input and signal processing options including FFTs."""
-        super().init_data_options(parser)  # type: ignore[misc]
+        super().init_data_options(parser)
         cls.arg_fft(parser)
 
     @classmethod
@@ -1212,7 +1212,7 @@ class FFTMixin:
                 args.overlap = recommended_overlap(args.window)
             except ValueError:
                 args.overlap = 0.5
-        return super()._finalize_arguments(args)  # type: ignore[misc]
+        return super()._finalize_arguments(args)
 
 
 class TimeDomainProduct(CliProduct, metaclass=abc.ABCMeta):

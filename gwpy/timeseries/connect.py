@@ -130,7 +130,7 @@ class _TimeSeriesRead(UnifiedRead):
     """
 
     @abstractmethod
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[T],
         pad: float | None = None,
@@ -143,7 +143,7 @@ class _TimeSeriesRead(UnifiedRead):
         Must be given at least one item.
         """
 
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         source: NamedReadable | Sequence[NamedReadable],
         name: str | Channel | None = None,
@@ -203,7 +203,7 @@ class TimeSeriesBaseRead(_TimeSeriesRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[TimeSeriesBase],
         pad: float | None = None,
@@ -244,7 +244,7 @@ class TimeSeriesBaseGet(UnifiedGet):
     Notes
     -----"""
 
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         name: str | Channel,
         start: SupportsToGps,
@@ -551,7 +551,7 @@ class TimeSeriesBaseDictRead(_TimeSeriesRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[TimeSeriesBaseDict],
         pad: float | None = None,
@@ -589,7 +589,7 @@ class TimeSeriesBaseDictGet(UnifiedGet):
     Notes
     -----"""
 
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         names: Sequence[str | Channel],
         start: SupportsToGps,

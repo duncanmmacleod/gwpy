@@ -270,7 +270,7 @@ def _get_column(
         if name in llwtable.validcolumns:
             dtype = _get_pytype(llwtable.validcolumns[name])
         else:
-            dtype = _get_property_type(type(llwtable), name)  # type: ignore[arg-type]
+            dtype = _get_property_type(type(llwtable), name)
         if dtype:
             return numpy.empty((0,), dtype=dtype)
 
@@ -381,18 +381,18 @@ def _get_column_dtype(
     'int32'
     """
     try:
-        dtype = llwcol.dtype  # type: ignore[union-attr]
+        dtype = llwcol.dtype
         if dtype is numpy.dtype("O"):
             raise AttributeError  # goto below
     except AttributeError:
         try:  # igwn_ligolw.ligolw.Column
-            name = str(llwcol.getAttribute("Name"))  # type: ignore[union-attr]
-            if name.startswith(f"{llwcol.parentNode.Name}:"):  # type: ignore[union-attr]
+            name = str(llwcol.getAttribute("Name"))
+            if name.startswith(f"{llwcol.parentNode.Name}:"):
                 name = name.split(":", 1)[-1]
-            llwtype = llwcol.parentNode.validcolumns[name]  # type: ignore[union-attr]
+            llwtype = llwcol.parentNode.validcolumns[name]
         except AttributeError:  # not a column
             try:
-                return type(llwcol[0])  # type: ignore[index]
+                return type(llwcol[0])
             except IndexError:
                 return None
         # map column type str to python type
@@ -602,7 +602,7 @@ def write_table(  # noqa: D417
 
 for table_ in LIGOLW_TABLES:
     # register conversion from LIGO_LW to astropy Table
-    table_.__astropy_table__ = to_astropy_table  # type: ignore[attr-defined]
+    table_.__astropy_table__ = to_astropy_table
 
 for klass in (Table, EventTable):
     registry = klass.read.registry
