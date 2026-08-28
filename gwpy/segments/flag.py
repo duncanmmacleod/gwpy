@@ -49,7 +49,10 @@ from math import (
     ceil,
     floor,
 )
-from typing import TYPE_CHECKING
+from typing import (
+    cast,
+    TYPE_CHECKING,
+)
 from urllib.parse import urlparse
 
 from astropy.table import Row as AstropyTableRow
@@ -93,10 +96,12 @@ if TYPE_CHECKING:
     )
 
     import astropy.table
-    import igwn_ligolw
+    import igwn_ligolw.ligolw
+    import igwn_ligolw.lsctables
+    from requests import Response
 
-    from ...plot import Plot
-    from ...time import SupportsToGps
+    from ..plot import Plot
+    from ..time import SupportsToGps
 
     P = ParamSpec("P")
     R = TypeVar("R")
@@ -494,6 +499,7 @@ class DataQualityFlag:
                     **kwargs,
                 )
             except HTTPError as exc:
+                exc.response = cast("Response", exc.response)
                 if exc.response.status_code == http_codes.NOT_FOUND:
                     exc.args = (exc.args[0] + f" [{flag}]",)
                 raise
@@ -911,7 +917,7 @@ class DataQualityFlag:
     def _parse_name(
         self,
         name: str | None,
-    ) -> tuple[str | None, str | None, str | None]:
+    ) -> tuple[str | None, str | None, int | None]:
         """Parse a flag name and set properties of this flag.
 
         Parameters
@@ -1363,7 +1369,7 @@ class DataQualityDict(dict):
 
         def _write_attrs(
             table: igwn_ligolw.ligolw.Table,
-            row: igwn_ligolw.ligolw.Row,
+            row: igwn_ligolw.ligolw.Table.RowType,
         ) -> None:
             """Write custom attributes to this row."""
             for key, val in attrs.items():
