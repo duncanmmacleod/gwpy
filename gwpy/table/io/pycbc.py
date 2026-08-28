@@ -420,11 +420,11 @@ for _key in (
 # update custom columns using pycbc's ranking function dict
 try:
     from pycbc.events.ranking import (
-        required_datasets,
+        reqd_datasets,
         sngls_ranking_function_dict,
     )
 except ImportError:
     pass
 else:
     GET_COLUMN.update(sngls_ranking_function_dict)
-    GET_COLUMN_EXTRA.update(required_datasets)
+    GET_COLUMN_EXTRA.update((k, set(v)) for k, v in reqd_datasets.items())
