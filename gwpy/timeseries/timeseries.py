@@ -1233,7 +1233,7 @@ class TimeSeries(TimeSeriesBase):
 
         def _repack(new: numpy.ndarray) -> TimeSeries:
             """Repack the resampled array to look like the original object."""
-            out = cast("Self", new.view(type(self)))
+            out = new.view(type(self))
             out.__metadata_finalize__(self)
             out.override_unit(self.unit)
             out.sample_rate = rate

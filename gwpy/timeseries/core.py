@@ -43,7 +43,6 @@ from typing import (
     TYPE_CHECKING,
     Generic,
     TypeVar,
-    cast,
     overload,
 )
 
@@ -1728,7 +1727,7 @@ class TimeSeriesBaseDict(dict[str | Channel, _V], Generic[_V]):
             "drawstyle",
             f"steps-{where}",
         )
-        tmp = cast("Self", type(self)())
+        tmp = type(self)()
         for key, series in self.items():
             tmp[key] = series.append(series.value[-1:], inplace=False)
 

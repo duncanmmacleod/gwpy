@@ -21,10 +21,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import (
-    TYPE_CHECKING,
-    cast,
-)
+from typing import TYPE_CHECKING
 
 import numpy
 from astropy.units import Quantity
@@ -611,7 +608,7 @@ class Spectrogram(Array2D):
         ValueError
             If ``filt`` arguments cannot be interpreted properly.
         """
-        return cast("Self", _fdfilter(
+        return _fdfilter(
             self,
             filt,
             analog=analog,
@@ -620,7 +617,7 @@ class Spectrogram(Array2D):
             normalize_gain=normalize_gain,
             inplace=inplace,
             **kwargs,
-        ))
+        )
 
     def variance(
         self,
@@ -713,10 +710,6 @@ class Spectrogram(Array2D):
             low = Quantity(low, self._default_yunit)
         if high is not None:
             high = Quantity(high, self._default_yunit)
-
-        # Cast for type checker
-        low = cast("Quantity | None", low)
-        high = cast("Quantity | None", high)
 
         # Check low frequency
         if low is not None and low == self.f0:

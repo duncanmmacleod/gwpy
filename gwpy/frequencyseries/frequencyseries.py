@@ -21,10 +21,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import (
-    TYPE_CHECKING,
-    cast,
-)
+from typing import TYPE_CHECKING
 
 import numpy
 from astropy import units
@@ -431,7 +428,7 @@ class FrequencySeries(Series):
             units (e.g. poles and zeros specified in Hertz).
         """
         from ._fdcommon import _fdfilter
-        return cast("Self", _fdfilter(
+        return _fdfilter(
             self,
             filt,
             analog=analog,
@@ -439,7 +436,7 @@ class FrequencySeries(Series):
             sample_rate=sample_rate,
             unit=unit,
             normalize_gain=normalize_gain,
-        ))
+        )
 
     @classmethod
     def from_lal(
