@@ -29,7 +29,10 @@ from astropy.units import Quantity
 from .array import COPY_IF_NEEDED
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import (
+        Self,
+        SupportsFloat,
+    )
 
     from numpy.typing import (
         ArrayLike,
@@ -49,8 +52,8 @@ class Index(Quantity):
     @classmethod
     def define(
         cls,
-        start: float,
-        step: float,
+        start: SupportsFloat,
+        step: SupportsFloat,
         num: int,
         dtype: DTypeLike = None,
     ) -> Self:
