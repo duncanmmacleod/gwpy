@@ -41,7 +41,7 @@ from ...time import LIGOTimeGPS
 from .. import Array
 
 if TYPE_CHECKING:
-    from numpy.typing import DType
+    from numpy.typing import DTypeLike
 
 warnings.filterwarnings("always", category=units.UnitsWarning)
 warnings.filterwarnings("always", category=UserWarning)
@@ -64,7 +64,7 @@ class TestArray(Generic[ArrayType]):
     TEST_CLASS: type[ArrayType] = Array
 
     #: The data type of the array under test
-    DTYPE: type[DType] | None = None
+    DTYPE: type[DTypeLike] | None = None
 
     #: A shared array of data to use in tests
     data: numpy.ndarray
