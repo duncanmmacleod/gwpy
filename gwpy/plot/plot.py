@@ -87,7 +87,7 @@ def interactive_backend() -> bool:
             backends.BackendFilter.INTERACTIVE,
         )
     except AttributeError:  # matplotlib < 3.9.0
-        from matplotlib.rcsetup import interactive_bk  # ty: ignore[unresolved-import]
+        from matplotlib.rcsetup import interactive_bk
     return get_backend() in interactive_bk
 
 

@@ -203,7 +203,7 @@ def to_gps(
 
     # tuple -> datetime.date
     if isinstance(t, tuple | list):
-        t = datetime.datetime(*t, tzinfo=tzinfo)  # ty: ignore
+        t = datetime.datetime(*t, tzinfo=tzinfo)
 
     # datetime.datetime -> Time
     if isinstance(t, datetime.date):

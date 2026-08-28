@@ -614,11 +614,11 @@ def parse_filter(
     if isinstance(filt, signal.lti | signal.dlti):
         lti_ = filt
     else:
-        lti_ = signal.lti(*filt)  # ty: ignore[invalid-argument-type]
+        lti_ = signal.lti(*filt)
     if isinstance(lti_, signal.TransferFunction):
         return "ba", (lti_.num, lti_.den)
     if not isinstance(lti_, signal.ZerosPolesGain):
-        lti_ = lti_.to_zpk()      # ty: ignore[invalid-argument-type]
+        lti_ = lti_.to_zpk()
     return "zpk", (lti_.zeros, lti_.poles, lti_.gain)
 
 

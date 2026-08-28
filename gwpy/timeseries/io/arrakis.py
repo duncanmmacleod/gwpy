@@ -212,7 +212,7 @@ def fetch_block(
     out = series_class.DictClass()
     for name, series in block.items():
         if series.has_gaps:
-            series.data.set_fill_value(pad)  # ty:ignore[unresolved-attribute]
+            series.data.set_fill_value(pad)
         # Use original key (maybe a Channel object)
         out[names[name]] = series_class.from_arrakis(series)
 

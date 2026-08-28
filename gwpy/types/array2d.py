@@ -215,7 +215,7 @@ class Array2D(Series):
     def __getitem__(self, item: SliceLike | tuple[SliceLike, ...]) -> Self: ...
 
     # rebuild getitem to handle complex slicing
-    def __getitem__(  # ty: ignore[invalid-method-override]
+    def __getitem__(
         self,
         item: tuple[int, int] | int | SliceLike | tuple[SliceLike, ...],
     ) -> Self | Series | Quantity:
