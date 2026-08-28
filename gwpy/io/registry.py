@@ -846,7 +846,33 @@ class UnifiedGet(UnifiedFetch, Generic[T]):
 
 # -- utilities -----------------------
 
-def inherit_unified_io(klass: type) -> type:
+class _UnifiedIOAccessor(Protocol):
+    """The object returned by accessing ``Klass.read`` / ``Klass.write``.
+
+    The `~astropy.io.registry.UnifiedReadWriteMethod` descriptor returns an
+    `astropy.io.registry.UnifiedReadWrite` instance for both instance and
+    class access; all we need from it here is the I/O ``registry``.
+    """
+
+    registry: UnifiedIORegistry
+
+
+class UnifiedIOClass(Protocol):
+    """Typing protocol for a class that implements the Astropy unified I/O interface.
+
+    Such a class declares ``read`` (and usually ``write``) as
+    `~astropy.io.registry.UnifiedReadWriteMethod` descriptors, so that
+    ``Klass.read`` resolves to an object exposing the I/O ``registry``.
+    """
+
+    read: _UnifiedIOAccessor
+    write: _UnifiedIOAccessor
+
+
+UnifiedIOClassT = TypeVar("UnifiedIOClassT", bound=UnifiedIOClass)
+
+
+def inherit_unified_io(klass: type[UnifiedIOClassT]) -> type[UnifiedIOClassT]:
     """Re-register all Unified I/O readers/writers/identifiers from a parent to a child.
 
     Only works with the first parent in the inheritance tree.
@@ -854,7 +880,7 @@ def inherit_unified_io(klass: type) -> type:
     This allows the Unified I/O registrations for the child class to be
     modified independently of the parent.
     """
-    parent = klass.__mro__[1]
+    parent = cast("type[UnifiedIOClassT]", klass.__mro__[1])
     parent_registry = parent.read.registry
     child_registry = klass.read.registry
     for row in parent_registry.get_formats(data_class=parent):
