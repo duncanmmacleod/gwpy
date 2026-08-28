@@ -204,7 +204,7 @@ def test_kinit_notty(mock_isatty):
 @mock.patch("gwpy.io.kerberos._acquire_password")
 def test_kinit_error(mock_acquire_password):
     """Test that `gwpy.io.kerberos.kinit` propagates `GSSError`s appropriately."""
-    import gssapi
+    import gssapi.exceptions
     mock_acquire_password.side_effect = gssapi.exceptions.GSSError(0, 0)
 
     with pytest.raises(

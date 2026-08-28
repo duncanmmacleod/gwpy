@@ -38,8 +38,6 @@ if TYPE_CHECKING:
         TypeVar,
     )
 
-    import h5py
-
     from .utils import (
         FileLike,
         Readable,
