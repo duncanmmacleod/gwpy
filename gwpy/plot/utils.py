@@ -29,7 +29,7 @@ from matplotlib import (
 )
 
 if TYPE_CHECKING:
-    from collections.abs import (
+    from collections.abc import (
         Iterable,
         Iterator,
     )

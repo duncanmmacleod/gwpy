@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     from typing import Literal
 
     import PIL.Image
-    from matplotlib.artists import Artist
+    from matplotlib.artist import Artist
     from matplotlib.backend_bases import RendererBase
     from matplotlib.collections import (
         Collection,

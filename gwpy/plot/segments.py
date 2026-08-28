@@ -47,7 +47,7 @@ if TYPE_CHECKING:
         segmentlist,
         segmentlistdict,
     )
-    from matplotlib.artists import Artist
+    from matplotlib.artist import Artist
     from matplotlib.backend_bases import RendererBase
     from matplotlib.collections import Collection
 
