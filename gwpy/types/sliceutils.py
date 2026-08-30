@@ -183,7 +183,7 @@ def as_slice(slice_: tuple[SliceLike, ...]) -> tuple[slice | numpy.ndarray, ...]
 
 
 def as_slice(
-    slice_: None | SliceLike | tuple[SliceLike, ...],
+    slice_: SliceLike | tuple[SliceLike, ...] | None,
 ) -> slice | numpy.ndarray | tuple[slice | numpy.ndarray, ...]:
     """Convert an object to a slice, or tuple of slices, if possible.
 

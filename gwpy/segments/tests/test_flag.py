@@ -283,7 +283,7 @@ class TestDataQualityFlag:
         assert empty.name is None
 
         assert flag.name == NAME
-        assert flag.ifo == NAME.split(":")[0]
+        assert flag.ifo == NAME.split(":", maxsplit=1)[0]
         assert flag.tag == NAME.split(":")[1]
         assert flag.version == int(NAME.split(":")[2])
 

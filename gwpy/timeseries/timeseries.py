@@ -2375,7 +2375,7 @@ class TimeSeries(TimeSeriesBase):
         For more on inverse spectrum truncation, see arXiv:gr-qc/0509116.
         """
         # compute the ASD
-        fftlength = fftlength if fftlength else _fft_length_default(self.dt)
+        fftlength = fftlength or _fft_length_default(self.dt)
         if asd is None:
             asd = self.asd(
                 fftlength,

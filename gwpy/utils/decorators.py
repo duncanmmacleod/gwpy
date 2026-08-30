@@ -41,8 +41,8 @@ if TYPE_CHECKING:
 __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
 
 __all__ = [
-    "deprecated_property",
     "deprecated_function",
+    "deprecated_property",
     "return_as",
 ]
 

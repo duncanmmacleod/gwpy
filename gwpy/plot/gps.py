@@ -106,7 +106,7 @@ class GPSMixin:
 
     def __init__(
         self,
-        *args: Any,  # noqa: ANN401
+        *args,
         unit: UnitBase | None = None,
         epoch: Number | Decimal | SupportsToGps | None = None,
         **kwargs,

@@ -372,7 +372,7 @@ class DataQualityFlag:
         return self._padding
 
     @padding.setter
-    def padding(self, pad: None | tuple[float | None, float | None]) -> None:
+    def padding(self, pad: tuple[float | None, float | None] | None) -> None:
         if pad is None:
             self._padding = (0, 0)
         else:

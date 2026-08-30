@@ -997,7 +997,7 @@ def _truncate_transfer(
     scipy.signal.windows.tukey
     """
     nsamp = transfer.size
-    ncorner = ncorner if ncorner else 0
+    ncorner = ncorner or 0
     out = transfer.copy()
     out[0:ncorner] = 0
     # Apply tukey window to taper edges (5 samples on each side)

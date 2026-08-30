@@ -129,7 +129,7 @@ class TestStateTimeSeries(_TestTimeSeriesBase):
     @pytest.mark.parametrize("copy", [False, True])
     @pytest.mark.parametrize("dtype", [
         pytest.param(bool, id="bool"),
-        pytest.param(numpy.dtype('bool'), id="np_bool"),
+        pytest.param(numpy.dtype("bool"), id="np_bool"),
     ])
     def test_from_arrakis(self, copy, dtype):
         """Test `StateTimeSeries.from_arrakis`."""

@@ -256,7 +256,7 @@ class Plot(figure.Figure):
             }
             axes_kw["sharex"] = shared_with[sharex]
             axes_kw["sharey"] = shared_with[sharey]
-            axes_kw["xscale"] = xscale if xscale else _parse_xscale(group)
+            axes_kw["xscale"] = xscale or _parse_xscale(group)
             ax = axarr[row, col] = self.add_subplot(gs[row, col], **axes_kw)
 
             # plot data
