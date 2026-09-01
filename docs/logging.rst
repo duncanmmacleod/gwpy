@@ -27,9 +27,9 @@ To configure logging just for GWpy modules, you can use the following code:
     gwpy.init_logging()
 
 This will default to the `INFO` logging level, but can be overridden by
-passing a different value to the ``init_logger`` function, or by setting the
-``GWPY_LOG_LEVEL`` environment variable to the name or number of a valid
-logging level (see :ref:`gwpy-logging-env`).
+passing a different value to the :func:`gwpy.init_logging` function,
+or by setting the ``GWPY_LOG_LEVEL`` environment variable to the name or number
+of a valid logging level (see :ref:`gwpy-logging-env`).
 
 .. _gwpy-logging-env:
 
@@ -71,7 +71,7 @@ For more details on configuring logging in Python, see
 Coloredlogs
 ===========
 
-If you have the `coloredlogs` package installed, `gwpy.init_logging` will
+If you have the `coloredlogs` package installed, :func:`gwpy.init_logging` will
 configure coloured log messages, which can make it easier to distinguish
 between different levels of output.
 
