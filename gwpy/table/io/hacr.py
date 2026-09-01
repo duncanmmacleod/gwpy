@@ -337,7 +337,7 @@ def get_hacr_triggers(
     for db in databases:
         if engine is None:
             engine = create_engine(
-                db,  # type: ignore[arg-type]
+                db,
                 drivername=drivername,
                 username=username,
                 password=password,

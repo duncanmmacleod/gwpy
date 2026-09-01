@@ -22,7 +22,10 @@ from __future__ import annotations
 
 import operator
 from functools import reduce
-from typing import TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    cast,
+)
 
 from ...io.ligolw import (
     build_content_handler,
@@ -45,7 +48,12 @@ if TYPE_CHECKING:
 
     from igwn_ligolw.ligolw import (
         Document,
-        PartialContentHandler,
+        PartialLIGOLWContentHandler,
+    )
+    from igwn_ligolw.lsctables import (
+        SegmentDefTable,
+        SegmentSumTable,
+        SegmentTable,
     )
 
     from ...io.utils import (
@@ -58,7 +66,7 @@ if TYPE_CHECKING:
 __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
 
 
-def segment_content_handler() -> PartialContentHandler:
+def segment_content_handler() -> type[PartialLIGOLWContentHandler]:
     """Build a `~xml.sax.handlers.ContentHandler` to read segment XML tables."""
     from igwn_ligolw.ligolw import PartialLIGOLWContentHandler
     from igwn_ligolw.lsctables import (
@@ -110,9 +118,9 @@ def read_ligolw_dict(
         file ``fp``.
     """
     xmldoc = read_ligolw(source, contenthandler=segment_content_handler())
-    segdef = read_table(xmldoc, "segment_definer")
-    segsum = read_table(xmldoc, "segment_summary")
-    seg = read_table(xmldoc, "segment")
+    segdef = cast("SegmentDefTable", read_table(xmldoc, "segment_definer"))
+    segsum = cast("SegmentSumTable", read_table(xmldoc, "segment_summary"))
+    seg = cast("SegmentTable", read_table(xmldoc, "segment"))
 
     # parse tables
     out = DataQualityDict.from_ligolw_tables(

@@ -265,7 +265,7 @@ class StateTimeSeries(TimeSeriesBase):
 
     # -- unit handling (always dimensionless)
 
-    @property  # type: ignore[misc]
+    @property
     def unit(self) -> Unit:
         """The unit of this `StateTimeSeries`."""
         return units.dimensionless_unscaled
@@ -440,7 +440,7 @@ class StateTimeSeries(TimeSeriesBase):
 
     from_nds2_buffer.__doc__ = TimeSeriesBase.from_nds2_buffer.__doc__
 
-    @overload  # type: ignore[override]
+    @overload
     def __getitem__(self, key: SupportsIndex) -> bool: ...
     @overload
     def __getitem__(self, key: slice) -> Self: ...
@@ -717,7 +717,7 @@ class StateVector(TimeSeriesBase):
                 return self.bits
 
             if hasattr(self.channel, "bits"):
-                self.bits = self.channel.bits  # type: ignore[union-attr]
+                self.bits = self.channel.bits
                 return self.bits
 
             msg = (
@@ -979,7 +979,7 @@ class StateVector(TimeSeriesBase):
             new.bits = bits
         return new
 
-    def plot(  # type: ignore[override]
+    def plot(
         self,
         format: Literal["timeseries", "segments"] = "segments",  # noqa: A002
         bits: Iterable[int | str] | None = None,
@@ -1085,7 +1085,7 @@ class StateVector(TimeSeriesBase):
             itr = numpy.nditer(
                 [old, None],
                 flags=["external_loop", "reduce_ok"],
-                op_axes=[None, [0, -1]],  # type: ignore[list-item]
+                op_axes=[None, [0, -1]],
                 op_flags=[["readonly"], ["readwrite", "allocate"]],
             )
             dtype = self.dtype
@@ -1121,7 +1121,7 @@ class StateVector(TimeSeriesBase):
 class StateTimeSeriesDict(TimeSeriesBaseDict):
     """Dictionary of `StateTimeSeries` objects."""
 
-    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "StateTimeSeries")  # type: ignore[union-attr]
+    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "StateTimeSeries")
     EntryClass = StateTimeSeries
 
 
@@ -1129,7 +1129,7 @@ class StateTimeSeriesDict(TimeSeriesBaseDict):
 class StateVectorDict(TimeSeriesBaseDict):
     """Dictionary of `StateVector` objects."""
 
-    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "StateVector")  # type: ignore[union-attr]
+    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "StateVector")
     EntryClass = StateVector
 
     # -- i/o -------------------------
@@ -1142,5 +1142,5 @@ class StateVectorDict(TimeSeriesBaseDict):
 class StateVectorList(TimeSeriesBaseList):
     """List of `StateVector` objects."""
 
-    __doc__ = TimeSeriesBaseList.__doc__.replace("TimeSeriesBase", "StateVector")  # type: ignore[union-attr]
+    __doc__ = TimeSeriesBaseList.__doc__.replace("TimeSeriesBase", "StateVector")
     EntryClass = StateVector

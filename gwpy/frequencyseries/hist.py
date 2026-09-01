@@ -173,7 +173,7 @@ class SpectralVariance(Array2D):
             del self._bins
 
     # over-write yindex and yspan to communicate with bins
-    @property  # type: ignore[misc]
+    @property
     def yindex(self) -> Quantity:
         """List of left-hand amplitude bin edges."""
         return self.bins[:-1]
@@ -183,26 +183,26 @@ class SpectralVariance(Array2D):
         """Amplitude range (low, high) spanned by this array."""
         return Segment(self.bins.value[0], self.bins.value[-1])
 
-    @property  # type: ignore[misc]
+    @property
     def dy(self) -> Quantity:
         """Size of the first (lowest value) amplitude bin."""
         return self.bins[1] - self.bins[0]
 
-    @property  # type: ignore[misc]
+    @property
     def y0(self) -> Quantity:
         """Starting value of the first (lowest value) amplitude bin."""
         return self.bins[0]
 
     f0 = property_alias(
-        Array2D.x0,  # type: ignore[arg-type]
+        Array2D.x0,
         doc="Starting frequency for this `SpectralVariance`.",
     )
     df = property_alias(
-        Array2D.dx,  # type: ignore[arg-type]
+        Array2D.dx,
         doc="Frequency spacing of this `SpectralVariance`.",
     )
     frequencies = property_alias(
-        Array2D.xindex,  # type: ignore[arg-type]
+        Array2D.xindex,
         doc="Array of frequencies for each sample",
     )
 
@@ -365,7 +365,7 @@ class SpectralVariance(Array2D):
             name=name,
         )
 
-    def plot(  # type: ignore[override]
+    def plot(
         self,
         xscale: str = "log",
         method: str = "pcolormesh",

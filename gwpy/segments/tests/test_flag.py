@@ -283,7 +283,7 @@ class TestDataQualityFlag:
         assert empty.name is None
 
         assert flag.name == NAME
-        assert flag.ifo == NAME.split(":")[0]
+        assert flag.ifo == NAME.split(":", maxsplit=1)[0]
         assert flag.tag == NAME.split(":")[1]
         assert flag.version == int(NAME.split(":")[2])
 
@@ -299,7 +299,7 @@ class TestDataQualityFlag:
     def test_known_cast(self):
         """Test that the ``known`` property casts to `SegmentList`."""
         new = self.TEST_CLASS()
-        new.known = [(1, 2), (3, 4)]  # type: ignore[assignment]
+        new.known = [(1, 2), (3, 4)]
         assert isinstance(new.known, SegmentList)
         assert all(isinstance(seg, Segment) for seg in new.known)
 
@@ -315,7 +315,7 @@ class TestDataQualityFlag:
     def test_active_cast(self):
         """Test that the ``active`` property casts to `SegmentList`."""
         new = self.TEST_CLASS()
-        new.active = [(1, 2), (3, 4)]  # type: ignore[assignment]
+        new.active = [(1, 2), (3, 4)]
         assert isinstance(new.active, SegmentList)
         assert all(isinstance(seg, Segment) for seg in new.active)
 
@@ -381,11 +381,11 @@ class TestDataQualityFlag:
         assert isinstance(flag.padding, tuple)
         assert flag.padding == result
 
-        flag.padding = [-1, 2]  # type: ignore[assignment]
+        flag.padding = [-1, 2]
         assert isinstance(flag.padding, tuple)
         assert flag.padding == (-1, 2)
 
-        flag.padding = None  # type: ignore[assignment]
+        flag.padding = None
         assert flag.padding == (0, 0)
 
     def test_padding_deleter(self):

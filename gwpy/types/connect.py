@@ -77,7 +77,7 @@ class SeriesRead(UnifiedRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[Series],
         pad: float | None = None,

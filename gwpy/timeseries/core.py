@@ -43,7 +43,6 @@ from typing import (
     TYPE_CHECKING,
     Generic,
     TypeVar,
-    cast,
     overload,
 )
 
@@ -279,10 +278,10 @@ class TimeSeriesBase(Series):
     # -- TimeSeries properties -------
 
     # rename properties from the Series
-    t0 = property_alias(Series.x0, "GPS start time of this series.")  # type: ignore[arg-type]
-    dt = property_alias(Series.dx, "Time (seconds) between successive samples.")  # type: ignore[arg-type]
-    span = property_alias(Series.xspan, "Time (seconds) spanned by this series.")  # type: ignore[arg-type]
-    times = property_alias(Series.xindex, "Array of GPS times for each sample.")  # type: ignore[arg-type]
+    t0 = property_alias(Series.x0, "GPS start time of this series.")
+    dt = property_alias(Series.dx, "Time (seconds) between successive samples.")
+    span = property_alias(Series.xspan, "Time (seconds) spanned by this series.")
+    times = property_alias(Series.xindex, "Array of GPS times for each sample.")
 
     # -- epoch
     # this gets redefined to attach to the t0 property
@@ -305,7 +304,7 @@ class TimeSeriesBase(Series):
             self.t0 = epoch.gps
         else:
             try:
-                self.t0 = to_gps(epoch)  # type: ignore[assignment]
+                self.t0 = to_gps(epoch)
             except TypeError:
                 self.t0 = epoch
 
@@ -954,7 +953,7 @@ class TimeSeriesBase(Series):
 
     # -- TimeSeries operations -------
 
-    def __array_ufunc__(  # type: ignore[override]
+    def __array_ufunc__(
         self,
         function: Callable,
         method: str,
@@ -1728,7 +1727,7 @@ class TimeSeriesBaseDict(dict[str | Channel, _V], Generic[_V]):
             "drawstyle",
             f"steps-{where}",
         )
-        tmp = cast("Self", type(self)())
+        tmp = type(self)()
         for key, series in self.items():
             tmp[key] = series.append(series.value[-1:], inplace=False)
 

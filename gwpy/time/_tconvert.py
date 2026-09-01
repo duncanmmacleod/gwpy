@@ -125,7 +125,7 @@ def tconvert(
     # convert from GPS into datetime
     try:
         # if we can 'float' it, then its probably a GPS time
-        float(gpsordate)  # type: ignore[arg-type]
+        float(gpsordate)
     except (
         TypeError,
         ValueError,
@@ -203,7 +203,7 @@ def to_gps(
 
     # tuple -> datetime.date
     if isinstance(t, tuple | list):
-        t = datetime.datetime(*t, tzinfo=tzinfo)  # ty: ignore
+        t = datetime.datetime(*t, tzinfo=tzinfo)
 
     # datetime.datetime -> Time
     if isinstance(t, datetime.date):
@@ -222,7 +222,7 @@ def to_gps(
     if isinstance(t, Time):
         return _time_to_gps(t)
     try:
-        return LIGOTimeGPS(t)  # type: ignore[arg-type]
+        return LIGOTimeGPS(t)
     except (TypeError, ValueError):
         return LIGOTimeGPS(float(t))
 
@@ -263,7 +263,7 @@ def from_gps(
     datetime.datetime(2015, 9, 14, 9, 50, 45, 391000)
     """
     try:
-        ltgps = LIGOTimeGPS(gps)  # type: ignore[call-arg,call-overload]
+        ltgps = LIGOTimeGPS(gps)
     except (
         ValueError,
         TypeError,

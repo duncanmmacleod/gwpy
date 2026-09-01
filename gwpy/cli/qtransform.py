@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 class QtransformProduct(SpectrogramProduct):
     """Plot the Q-transform (Omega)."""
 
-    DEFAULT_FFTLENGTH = None  # type: ignore[assignment]
+    DEFAULT_FFTLENGTH = None
     MAX_DATASETS = 1
     action: ClassVar[str] = "qtransform"
 
@@ -318,7 +318,7 @@ class QtransformProduct(SpectrogramProduct):
         """Return `True` if there are more plots to make."""
         return self.plot_num < len(self.args.plot)
 
-    def save(self, outdir: str | PathLike) -> None:  # type: ignore[override]
+    def save(self, outdir: str | PathLike) -> None:
         """Save the plot to the specified output directory."""
         ts = self.timeseries[0]
         cname = re.sub(

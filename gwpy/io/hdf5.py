@@ -44,6 +44,8 @@ if TYPE_CHECKING:
         Writable,
     )
 
+    H5Type = TypeVar("H5Type", h5py.File, h5py.Group, h5py.Dataset)
+
     P = ParamSpec("P")
     R = TypeVar("R")
 
@@ -134,8 +136,8 @@ def open_hdf5(
 
 
 def with_read_hdf5(
-    func: Callable[Concatenate[Readable | h5py.HLObject, P], R],
-) -> Callable[Concatenate[h5py.HLObject, P], R]:
+    func: Callable[Concatenate[H5Type, P], R],
+) -> Callable[Concatenate[Readable | H5Type, P], R]:
     """Decorate an HDF5-reading function to open a filepath if needed.
 
     The decorated function will accept file paths or readable objects,
@@ -154,7 +156,7 @@ def with_read_hdf5(
     """
     @wraps(func)
     def decorated_func(
-        fobj: Readable,
+        fobj: Readable | H5Type,
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:

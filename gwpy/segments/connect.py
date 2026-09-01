@@ -73,7 +73,7 @@ class SegmentListRead(UnifiedRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[SegmentList],
         *,
@@ -149,7 +149,7 @@ class DataQualityFlagRead(UnifiedRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[DataQualityFlag],
         *,
@@ -233,7 +233,7 @@ class DataQualityDictRead(UnifiedRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         inputs: Sequence[DataQualityDict],
         *,

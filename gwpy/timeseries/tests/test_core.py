@@ -99,7 +99,7 @@ class TestTimeSeriesBase(_TestSeries[TimeSeriesBaseType], Generic[TimeSeriesBase
         ):
             self.TEST_CLASS(self.data, sample_rate=1, dt=1)
 
-    def test_epoch(self):  # type: ignore[override]
+    def test_epoch(self):
         """Test `gwpy.timeseries.TimeSeriesBase.epoch`."""
         # check basic conversion from t0 -> epoch
         a = self.create(t0=1126259462)
@@ -189,7 +189,7 @@ class TestTimeSeriesBase(_TestSeries[TimeSeriesBaseType], Generic[TimeSeriesBase
         pytest.param(numpy.float64, id="float64"),
         pytest.param(numpy.int32, id="int32"),
         pytest.param(bool, id="bool"),
-        pytest.param(numpy.dtype('bool'), id="np_bool"),
+        pytest.param(numpy.dtype("bool"), id="np_bool"),
     ])
     def test_from_arrakis(self, copy, dtype):
         """Test `TimeSeriesBase.from_arrakis`."""

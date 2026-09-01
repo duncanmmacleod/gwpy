@@ -105,7 +105,7 @@ def get_window(
     # 1. try something floaty
     try:
         return _get_window(
-            float(window),  # type: ignore[arg-type]
+            float(window),
             Nx,
             *args,
             **kwargs,

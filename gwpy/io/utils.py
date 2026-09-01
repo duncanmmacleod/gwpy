@@ -212,10 +212,10 @@ def with_open(
                 # open the file, ...
                 with open(source, mode=mode) as fobj:  # noqa: PTH123
                     # replace the argument with the open file, ...
-                    args = list(args)  # type: ignore[assignment]
-                    args[pos] = fobj  # type: ignore[index]
+                    newargs = list(args)
+                    newargs[pos] = fobj
                     # and re-execute the function call
-                    return func(*args, **kwargs)
+                    return func(*newargs, **kwargs)
             return func(*args, **kwargs)
         return wrapped_func
     if func:
@@ -323,7 +323,7 @@ def file_path(fobj: NamedReadable | bytes | CacheEntry) -> str:
         return os.fspath(fobj)
     # Named file-like object
     if isinstance(fobj, FileLike) and hasattr(fobj, "name"):
-        return fobj.name
+        return str(fobj.name)
     # CacheEntry (or any other object with a .path attribute)
     if hasattr(fobj, "path"):
         return os.fspath(fobj.path)

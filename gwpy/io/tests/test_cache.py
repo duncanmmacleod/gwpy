@@ -30,11 +30,11 @@ from .. import cache as io_cache
 
 __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
 
-SEGMENTS = SegmentList(map(Segment, [
-    (0, 1),
-    (1, 2),
-    (4, 5),
-]))
+SEGMENTS = SegmentList([
+    Segment(0, 1),
+    Segment(1, 2),
+    Segment(4, 5),
+])
 CACHE = [Path("tmp") / f"A-B-{seg[0]}-{seg[1]-seg[0]}.tmp" for seg in SEGMENTS]
 
 
@@ -127,7 +127,7 @@ def test_is_cache_lal():
     """Test `is_cache()` with `lal.CacheEntry` objects."""
     cache = [io_cache.CacheEntry.from_T050017("/data/A-B-12345-6.txt")]
     assert io_cache.is_cache(cache)
-    assert not io_cache.is_cache([*cache, None])  # type: ignore[list-item]
+    assert not io_cache.is_cache([*cache, None])
 
 
 @pytest.mark.requires("glue.lal")

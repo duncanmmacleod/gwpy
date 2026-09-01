@@ -23,7 +23,6 @@ from __future__ import annotations
 import contextlib
 from typing import (
     TYPE_CHECKING,
-    cast,
     overload,
 )
 from warnings import warn
@@ -216,7 +215,7 @@ class Array2D(Series):
     def __getitem__(self, item: SliceLike | tuple[SliceLike, ...]) -> Self: ...
 
     # rebuild getitem to handle complex slicing
-    def __getitem__(  # ty: ignore[invalid-method-override]
+    def __getitem__(
         self,
         item: tuple[int, int] | int | SliceLike | tuple[SliceLike, ...],
     ) -> Self | Series | Quantity:
@@ -228,14 +227,14 @@ class Array2D(Series):
 
         # Column slice
         if new.ndim == 1 and isinstance(colslice, int):
-            new = cast("Series", new.view(self._columnclass))
+            new = new.view(self._columnclass)
             del new.xindex
             new.__metadata_finalize__(self)
             sliceutils.slice_axis_attributes(self, "y", new, "x", rowslice)
 
         # Row slice
         elif new.ndim == 1:
-            new = cast("Series", new.view(self._rowclass))
+            new = new.view(self._rowclass)
 
         # Slice axis 1 for Array2D
         # (Series.__getitem__ will have performed column slice already)
@@ -394,7 +393,7 @@ class Array2D(Series):
             irregular_equal=irregular_equal,
         )
 
-    def value_at(  # type: ignore[override]
+    def value_at(
         self,
         x: QuantityLike,
         y: QuantityLike,

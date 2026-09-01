@@ -136,7 +136,7 @@ def _preformat_psd(
         if psd.unit != PSD_UNIT:
             psd = psd.view()
             psd.override_unit(PSD_UNIT)
-        args = (psd, *args[1:])  # type: ignore[assignment]
+        args = (psd, *args[1:])
         return func(*args, **kwargs)
     return decorated_func
 

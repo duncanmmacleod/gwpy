@@ -98,7 +98,7 @@ def test_file_list_error():
         ValueError,
         match=r"^Could not parse input 1 as one or more file-like objects$",
     ):
-        io_utils.file_list(1)  # type: ignore[arg-type]
+        io_utils.file_list(1)  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.parametrize(("input_", "expected"), [

@@ -37,7 +37,7 @@ __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
 
 
 def if_not_none(
-    func: Callable[[T], R],
+    func: Callable[[T], R] | type,
     value: T,
 ) -> R | None:
     """Apply func to value if value is not None.

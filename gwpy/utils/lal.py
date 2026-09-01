@@ -29,6 +29,7 @@ from fractions import Fraction
 from functools import reduce
 from typing import (
     TYPE_CHECKING,
+    cast,
     overload,
 )
 
@@ -126,15 +127,16 @@ def to_lal_type_str(pytype: type | DTypeLike | str | int) -> str:
     """
     # noop
     if pytype in LAL_TYPE_FROM_STR:
-        return pytype  # type: ignore[return-value]
+        return str(pytype)
 
     # convert type code
     if pytype in LAL_TYPE_STR:
-        return LAL_TYPE_STR[pytype]  # type: ignore[index]
+        pytype = cast("int", pytype)
+        return LAL_TYPE_STR[pytype]
 
     # convert python type
     try:
-        dtp: type = numpy.dtype(pytype).type  # type: ignore[arg-type]
+        dtp: type = numpy.dtype(pytype).type  # ty: ignore[no-matching-overload]
         return LAL_TYPE_STR_FROM_NUMPY[dtp]
     except (
         TypeError,  # failed to convert input to dtype

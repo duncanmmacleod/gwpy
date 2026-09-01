@@ -116,7 +116,7 @@ def strip_ilwdchar(content_handler: type[ContentHandler]) -> type[ContentHandler
     from igwn_ligolw.lsctables import TableByName
     from igwn_ligolw.types import FromPyType
 
-    class IlwdMapContentHandler(content_handler):  # type: ignore[misc,valid-type]
+    class IlwdMapContentHandler(content_handler):
 
         def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002
             super().__init__(*args, **kwargs)
@@ -158,6 +158,7 @@ def strip_ilwdchar(content_handler: type[ContentHandler]) -> type[ContentHandler
         ) -> Stream:
             result = super().startStream(parent, attrs)
             if isinstance(result, Table.Stream):
+                parent = cast("Table", parent)
                 loadcolumns = set(parent.columnnames)
                 if parent.loadcolumns is not None:
                     loadcolumns &= set(parent.loadcolumns)
@@ -179,7 +180,7 @@ def strip_ilwdchar(content_handler: type[ContentHandler]) -> type[ContentHandler
 def _wrap_content_handler(contenthandler: type[ContentHandler]) -> type[ContentHandler]:
 
     @strip_ilwdchar
-    class ContentHandler(contenthandler):  # type: ignore[misc,valid-type]
+    class ContentHandler(contenthandler):
         pass
 
     return ContentHandler
@@ -284,7 +285,7 @@ def build_content_handler(
         a new content handler that applies the filter function and the
         default parsing extras from :func:`_wrap_content_handler`.
     """
-    class ContentHandler(parent):  # type: ignore[misc,valid-type]
+    class ContentHandler(parent):
         def __init__(self, document: Document) -> None:
             super().__init__(document, filter_func)
 
@@ -497,7 +498,7 @@ def open_xmldoc(
     )
 
 
-def get_ligolw_element(xmldoc: Document) -> Element:
+def get_ligolw_element(xmldoc: Element) -> Element:
     """Find an existing <LIGO_LW> element in this XML Document."""
     from igwn_ligolw.ligolw import LIGO_LW, WalkChildren
 
@@ -625,7 +626,7 @@ def write_tables(
     if isinstance(target, FileLike):
         writer = ligolw_utils.write_fileobj
         try:
-            name = target.name  # type: ignore[union-attr]
+            name = target.name  # ty: ignore[unresolved-attribute]
         except AttributeError:
             name = ""
     else:
@@ -672,7 +673,9 @@ def iter_tables(
             yield elem
 
 
-def list_tables(source: FileLike | str | Document | list) -> list[str]:
+def list_tables(
+    source: Document | NamedReadable | list[NamedReadable],
+) -> list[str]:
     """List the names of all tables in this file(s).
 
     Parameters
@@ -692,7 +695,7 @@ def list_tables(source: FileLike | str | Document | list) -> list[str]:
 
 def to_table_type(
     val: object,
-    cls: type[Table],
+    cls: type[Table] | Table,
     colname: str,
 ) -> object:
     """Cast a value to the correct type for inclusion in a LIGO_LW table.
@@ -729,11 +732,17 @@ def to_table_type(
         ToPyType as pytypes,  # noqa: N813
     )
 
+    validcolumns: list[str] | None = cls.validcolumns
+
     # if nothing to do...
-    if val is None or colname not in cls.validcolumns:
+    if (
+        val is None
+        or validcolumns is None
+        or colname not in validcolumns
+    ):
         return val
 
-    llwtype = cls.validcolumns[colname]
+    llwtype = validcolumns[colname]
 
     # map to numpy or python types
     try:

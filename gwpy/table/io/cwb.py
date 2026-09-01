@@ -24,7 +24,7 @@ import re
 from typing import TYPE_CHECKING
 
 from astropy.io.ascii import core
-from astropy.io.registry import get_reader as astropy_get_reader
+from astropy.io.registry.compat import default_registry as astropy_registry
 
 from .. import (
     EventTable,
@@ -186,5 +186,5 @@ class Cwb(core.BaseReader):
 EventTable.read.registry.register_reader(
    "ascii.cwb",
     EventTable,
-    read_with_columns_and_where(astropy_get_reader("ascii.cwb", Table)),
+    read_with_columns_and_where(astropy_registry.get_reader("ascii.cwb", Table)),
 )

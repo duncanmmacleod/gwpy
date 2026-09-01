@@ -243,7 +243,7 @@ def _iter_cache(
     This method supports reading LAL- and (nested) FFL-format cache files.
     """
     try:
-        path = Path(cachefile.name).resolve()  # type: ignore[attr-defined]
+        path = Path(cachefile.name).resolve()  # ty: ignore[unresolved-attribute]
     except AttributeError:
         path = None
     for line in cachefile:
@@ -382,7 +382,7 @@ def write_cache(
 
 
 def is_cache(
-    cache: Readable | Cache | Sequence[CacheEntry | FileSystemPath],
+    cache: object,
 ) -> bool:
     """Return `True` if ``cache`` is a readable cache file or object.
 
@@ -518,9 +518,10 @@ def file_segment(filename: CacheEntry | FileSystemPath) -> Segment:
     documenting the GPS start integer and integer duration of a file,
     see that document for more details.
     """
-    try:  # CacheEntry
-        return Segment(filename.segment)  # type: ignore[union-attr]
+    try:
+        return Segment(filename.segment)  # ty: ignore[unresolved-attribute]
     except AttributeError:  # file path (str)
+        filename = cast("FileSystemPath", filename)
         return filename_metadata(filename)[2]
 
 

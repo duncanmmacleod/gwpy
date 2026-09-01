@@ -1233,7 +1233,7 @@ class TimeSeries(TimeSeriesBase):
 
         def _repack(new: numpy.ndarray) -> TimeSeries:
             """Repack the resampled array to look like the original object."""
-            out = cast("Self", new.view(type(self)))
+            out = new.view(type(self))
             out.__metadata_finalize__(self)
             out.override_unit(self.unit)
             out.sample_rate = rate
@@ -2375,7 +2375,7 @@ class TimeSeries(TimeSeriesBase):
         For more on inverse spectrum truncation, see arXiv:gr-qc/0509116.
         """
         # compute the ASD
-        fftlength = fftlength if fftlength else _fft_length_default(self.dt)
+        fftlength = fftlength or _fft_length_default(self.dt)
         if asd is None:
             asd = self.asd(
                 fftlength,
@@ -3111,7 +3111,7 @@ class TimeSeries(TimeSeriesBase):
 class TimeSeriesDict(TimeSeriesBaseDict):
     """A dictionary of `TimeSeries` objects."""
 
-    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "TimeSeries")  # type: ignore[union-attr]
+    __doc__ = TimeSeriesBaseDict.__doc__.replace("TimeSeriesBase", "TimeSeries")
     EntryClass = TimeSeries
 
     read = UnifiedReadWriteMethod(TimeSeriesDictRead)
@@ -3122,5 +3122,5 @@ class TimeSeriesDict(TimeSeriesBaseDict):
 class TimeSeriesList(TimeSeriesBaseList):
     """A list of `TimeSeries` objects."""
 
-    __doc__ = TimeSeriesBaseList.__doc__.replace("TimeSeriesBase", "TimeSeries")  # type: ignore[union-attr]
+    __doc__ = TimeSeriesBaseList.__doc__.replace("TimeSeriesBase", "TimeSeries")
     EntryClass = TimeSeries

@@ -23,10 +23,7 @@ from __future__ import annotations
 import re
 
 from astropy.io.ascii import core
-from astropy.io.registry import (
-    get_reader as astropy_get_reader,
-    get_writer as astropy_get_writer,
-)
+from astropy.io.registry.compat import default_registry as astropy_registry
 
 from .. import (
     EventTable,
@@ -92,10 +89,10 @@ class Omega(core.BaseReader):
 EventTable.read.registry.register_reader(
     "ascii.omega",
     EventTable,
-    read_with_columns_and_where(astropy_get_reader("ascii.omega", Table)),
+    read_with_columns_and_where(astropy_registry.get_reader("ascii.omega", Table)),
 )
 EventTable.write.registry.register_writer(
     "ascii.omega",
     EventTable,
-    astropy_get_writer("ascii.omega", Table),
+    astropy_registry.get_writer("ascii.omega", Table),
 )

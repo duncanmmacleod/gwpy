@@ -182,7 +182,7 @@ class TestChannel:
     def test_safe_setter(self, value, result):
         """Test `Channel.safe` property setting."""
         new = self.TEST_CLASS("")
-        new.safe = value  # type: ignore[assignment]
+        new.safe = value
         assert new.safe == result
 
     @pytest.mark.parametrize(("arg", "model"), [

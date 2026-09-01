@@ -21,10 +21,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import (
-    TYPE_CHECKING,
-    cast,
-)
+from typing import TYPE_CHECKING
 
 import numpy
 from astropy.units import Quantity
@@ -229,7 +226,7 @@ class Spectrogram(Array2D):
     # -- Spectrogram properties ------
 
     epoch = property_alias(
-        TimeSeries.epoch,  # type: ignore[arg-type]
+        TimeSeries.epoch,
         "GPS epoch for these data.",
     )
     t0 = property_alias(
@@ -245,23 +242,23 @@ class Spectrogram(Array2D):
         "GPS [start, stop) span for these data.",
     )
     f0 = property_alias(
-        Array2D.y0,  # type: ignore[arg-type]
+        Array2D.y0,
         "Starting frequency for these data.",
     )
     df = property_alias(
-        Array2D.dy,  # type: ignore[arg-type]
+        Array2D.dy,
         "Frequency spacing for these data.",
     )
     times = property_alias(
-        Array2D.xindex,  # type: ignore[arg-type]
+        Array2D.xindex,
         "Series of GPS times for each sample",
     )
     frequencies = property_alias(
-        Array2D.yindex,  # type: ignore[arg-type]
+        Array2D.yindex,
         "Series of frequencies for these data.",
     )
     band = property_alias(
-        Array2D.yspan,  # type: ignore[arg-type]
+        Array2D.yspan,
         "Frequency band described by these data.",
     )
 
@@ -411,7 +408,7 @@ class Spectrogram(Array2D):
             and "times" not in kwargs
         ):
             try:
-                kwargs["dt"] = spectra[1].epoch.gps - spec1.epoch.gps  # type: ignore[union-attr]
+                kwargs["dt"] = spectra[1].epoch.gps - spec1.epoch.gps
             except (
                 AttributeError,
                 IndexError,
@@ -611,7 +608,7 @@ class Spectrogram(Array2D):
         ValueError
             If ``filt`` arguments cannot be interpreted properly.
         """
-        return cast("Self", _fdfilter(
+        return _fdfilter(
             self,
             filt,
             analog=analog,
@@ -620,7 +617,7 @@ class Spectrogram(Array2D):
             normalize_gain=normalize_gain,
             inplace=inplace,
             **kwargs,
-        ))
+        )
 
     def variance(
         self,
@@ -713,10 +710,6 @@ class Spectrogram(Array2D):
             low = Quantity(low, self._default_yunit)
         if high is not None:
             high = Quantity(high, self._default_yunit)
-
-        # Cast for type checker
-        low = cast("Quantity | None", low)
-        high = cast("Quantity | None", high)
 
         # Check low frequency
         if low is not None and low == self.f0:
@@ -835,4 +828,4 @@ class SpectrogramList(TimeSeriesList):
         If any elements are not of type `Spectrogram`.
     """
 
-    EntryClass: ClassVar[type[Spectrogram]] = Spectrogram  # type: ignore[assignment]
+    EntryClass: ClassVar[type[Spectrogram]] = Spectrogram

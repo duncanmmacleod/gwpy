@@ -98,7 +98,7 @@ class EventTableRead(UnifiedRead):
     Notes
     -----"""
 
-    def merge(  # type: ignore[override]
+    def merge(
         self,
         items: Sequence[EventTable],
         join_type: Literal["inner", "exact", "outer"] = "outer",

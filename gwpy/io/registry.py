@@ -179,7 +179,7 @@ def _list_identifier(
             IndexError,  # empty list
             ValueError,  # target can't be resolved as a list of file-like
         ):
-            filepath = file_list(target)[0]  # type: ignore[arg-type]
+            filepath = file_list(target)[0]
         return identifier(origin, filepath, fileobj, *args, **kwargs)
 
     return decorated_func
@@ -205,7 +205,7 @@ class UnifiedIORegistry(astropy_registry.UnifiedIORegistry):
                 IndexError,  # list is empty
                 ValueError,  # failed to parse as list-like
             ):
-                path = file_list(path)[0]  # type: ignore[arg-type]
+                path = file_list(path)[0]
         return super().identify_format(
             origin,
             data_class_required,
@@ -293,9 +293,7 @@ class UnifiedRead(astropy_registry.UnifiedReadWrite, ABC, Generic[T]):
             The sequence of items to merge.
         **kwargs
             Additional keyword arguments specific to the merge operation.
-            Subclasses may override this method with specific named parameters;
-            use ``# type: ignore[override]`` to suppress mypy warnings about
-            signature compatibility.
+            Subclasses may override this method with specific named parameters.
 
         Returns
         -------
@@ -563,7 +561,7 @@ class UnifiedFetch(UnifiedRead[T], Generic[T]):
             registry=registry,
         )
 
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         *args,  # noqa: ANN002
         source: str | None = None,
@@ -758,7 +756,7 @@ class UnifiedGet(UnifiedFetch, Generic[T]):
         )
         self.logger = logging.getLogger(module or cls.__module__)
 
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         *args,
         source: str | list[str | dict[str, Any]] | None = None,
@@ -848,7 +846,33 @@ class UnifiedGet(UnifiedFetch, Generic[T]):
 
 # -- utilities -----------------------
 
-def inherit_unified_io(klass: type) -> type:
+class _UnifiedIOAccessor(Protocol):
+    """The object returned by accessing ``Klass.read`` / ``Klass.write``.
+
+    The `~astropy.io.registry.UnifiedReadWriteMethod` descriptor returns an
+    `astropy.io.registry.UnifiedReadWrite` instance for both instance and
+    class access; all we need from it here is the I/O ``registry``.
+    """
+
+    registry: UnifiedIORegistry
+
+
+class UnifiedIOClass(Protocol):
+    """Typing protocol for a class that implements the Astropy unified I/O interface.
+
+    Such a class declares ``read`` (and usually ``write``) as
+    `~astropy.io.registry.UnifiedReadWriteMethod` descriptors, so that
+    ``Klass.read`` resolves to an object exposing the I/O ``registry``.
+    """
+
+    read: _UnifiedIOAccessor
+    write: _UnifiedIOAccessor
+
+
+UnifiedIOClassT = TypeVar("UnifiedIOClassT", bound=UnifiedIOClass)
+
+
+def inherit_unified_io(klass: type[UnifiedIOClassT]) -> type[UnifiedIOClassT]:
     """Re-register all Unified I/O readers/writers/identifiers from a parent to a child.
 
     Only works with the first parent in the inheritance tree.
@@ -856,9 +880,9 @@ def inherit_unified_io(klass: type) -> type:
     This allows the Unified I/O registrations for the child class to be
     modified independently of the parent.
     """
-    parent = klass.__mro__[1]
-    parent_registry = parent.read.registry  # type: ignore[attr-defined]
-    child_registry = klass.read.registry  # type: ignore[attr-defined]
+    parent = cast("type[UnifiedIOClassT]", klass.__mro__[1])
+    parent_registry = parent.read.registry
+    child_registry = klass.read.registry
     for row in parent_registry.get_formats(data_class=parent):
         name = row["Format"]
 

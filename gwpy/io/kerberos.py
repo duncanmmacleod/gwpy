@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 KLIST = which("klist") or "klist"
 
 try:
-    _IPYTHON = __IPYTHON__  # type: ignore[name-defined]
+    _IPYTHON = __IPYTHON__
 except NameError:
     _IPYTHON = False
 
@@ -148,7 +148,7 @@ def _validate_keytab(
     # user _did_ specify username or realm, so if they match the keytab,
     # then we can use it
     try:
-        user, urealm = username.split("@", 1)  # type: ignore[union-attr]
+        user, urealm = username.split("@", 1)
     except (
         AttributeError,  # username is None
         ValueError,  # username doesn't contain an '@'

@@ -48,14 +48,13 @@ if TYPE_CHECKING:
         Iterable,
         Iterator,
     )
-    from pathlib import Path
     from typing import (
-        IO,
         Literal,
     )
 
     from ...time import SupportsToGps
     from ...types import Series
+    from ..utils import NamedReadable
 
 _FrVect = frameCPP.FrVect
 
@@ -149,20 +148,20 @@ class FrProcDataSubType(IntEnum):
 
 @overload
 def open_gwf(
-    gwf: str | Path | IO | frameCPP.IFrameFStream | frameCPP.OFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream | frameCPP.OFrameFStream,
     mode: Literal["r"],
 ) -> frameCPP.IFrameFStream:
     ...
 
 @overload
 def open_gwf(
-    gwf: str | Path | IO | frameCPP.IFrameFStream | frameCPP.OFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream | frameCPP.OFrameFStream,
     mode: Literal["w"],
 ) -> frameCPP.OFrameFStream:
     ...
 
 def open_gwf(
-    gwf: str | Path | IO | frameCPP.IFrameFStream | frameCPP.OFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream | frameCPP.OFrameFStream,
     mode: Literal["r", "w"] = "r",
 ) -> frameCPP.IFrameFStream | frameCPP.OFrameFStream:
     """Open a stream for reading or writing GWF format data.
@@ -190,6 +189,9 @@ def open_gwf(
         return gwf
     if mode == "w" and isinstance(gwf, frameCPP.OFrameFStream):
         return gwf
+    if isinstance(gwf, frameCPP.IFrameFStream | frameCPP.OFrameFStream):
+        msg = f"cannot open {gwf.__class__.__name__} in mode '{mode}'"
+        raise ValueError(msg)
     # open a new stream
     filename = file_path(gwf)
     if mode == "r":
@@ -198,7 +200,7 @@ def open_gwf(
 
 
 def write_frames(
-    gwf: str | Path | IO,
+    gwf: NamedReadable,
     frames: Iterable[frameCPP.FrameH],
     compression: int | str | None = None,
     compression_level: int | None = None,
@@ -550,7 +552,7 @@ def create_frvect(series: Series) -> frameCPP.FrVect:
 
 @overload
 def _iter_toc(
-    gwf: str | Path | IO | frameCPP.IFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream,
     type: str | None,
     count: Literal[True],
 ) -> Iterator[int]:
@@ -558,14 +560,14 @@ def _iter_toc(
 
 @overload
 def _iter_toc(
-    gwf: str | Path | IO | frameCPP.IFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream,
     type: str | None,
     count: Literal[False],
 ) -> Iterator[tuple[str, str]]:
     ...
 
 def _iter_toc(
-    gwf: str | Path | IO | frameCPP.IFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream,
     type: str | None = None,
     count: bool = False,
 ) -> Iterator[tuple[str, str] | int]:
@@ -606,7 +608,7 @@ def _iter_toc(
 
 
 def _count_toc(
-    gwf: str | Path | IO | frameCPP.IFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream,
     type: str | None = None,
 ) -> int:
     """Yield the names and types of channels listed in the TOC for a GWF file.
@@ -628,7 +630,7 @@ def _count_toc(
 
 
 def _channel_segments(
-    gwf: str | Path | IO | frameCPP.IFrameFStream,
+    gwf: NamedReadable | frameCPP.IFrameFStream,
     channel: str,
     warn: bool = True,
 ) -> Iterator[Segment]:

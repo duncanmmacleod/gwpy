@@ -49,6 +49,7 @@ from . import pelican as io_pelican
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
+    from pathlib import Path
     from typing import (
         IO,
         BinaryIO,
@@ -82,7 +83,7 @@ NETWORK_ERROR: tuple[type[Exception], ...] = (
 
 _download_file_from_source = astropy_data._download_file_from_source
 
-def _logging_download_file_from_source(url: str, *args, **kwargs) -> str:
+def _logging_download_file_from_source(url: str, *args, **kwargs) -> str | Path:
     """Patch for astropy's _download_file_from_source to log the URL.
 
     This is helpful for debugging downloads with multiple sources or
@@ -324,7 +325,7 @@ def _handle_remote_file(
         pelican_get = io_pelican.download_file
     else:
         get = astropy_data.get_readable_fileobj
-        pelican_get = io_pelican.open_remote_file  # type: ignore[assignment]
+        pelican_get = io_pelican.open_remote_file
 
     if cache is None:
         cache = bool_env("GWPY_CACHE", default=False)

@@ -159,7 +159,7 @@ class TestSegmentAxes(_TestAxes):
         sld["TEST"] = segments
         ax.plot(sld)
 
-    def test_plot(self, ax, segments, flag):  # type: ignore[override]
+    def test_plot(self, ax, segments, flag):
         """Test `SegmentAxes.plot`."""
         dqd = DataQualityDict(a=flag)
         ax.plot(segments)
@@ -180,7 +180,7 @@ class TestSegmentAxes(_TestAxes):
 
     # -- disable tests from upstream
 
-    def test_imshow(self):  # type: ignore[override]
+    def test_imshow(self):
         """Test `SegmentAxes.imshow`."""
         pytest.skip(f"not implemented for {type(self).__name__}")
 
@@ -220,4 +220,4 @@ def test_segmentrectangle_valign_error():
         ValueError,
         match="valign must be one of 'top', 'center', or 'bottom'",
     ):
-        SegmentRectangle((0, 1), 0, valign="blah")  # type: ignore[arg-type]
+        SegmentRectangle((0, 1), 0, valign="blah")

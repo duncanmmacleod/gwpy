@@ -28,6 +28,8 @@ if TYPE_CHECKING:
     import builtins
     from typing import Self
 
+    from numpy.typing import DTypeLike
+
 __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
 
 
@@ -47,7 +49,7 @@ class NumpyTypeEnum(Enum):
     @classmethod
     def find(
         cls,
-        type_: builtins.type | str | int,
+        type_: str | int | DTypeLike,
     ) -> Self:
         """Return the enumerated type corresponding to the given python type."""
         try:
@@ -56,7 +58,7 @@ class NumpyTypeEnum(Enum):
             if isinstance(type_, str):
                 type_ = type_.lower()
             try:
-                return cls[numpy.dtype(type_).name.upper()]  # type: ignore[arg-type]
+                return cls[numpy.dtype(type_).name.upper()]  # ty: ignore[no-matching-overload]
             except (
                 KeyError,  # numpy dtype isn't support by this enum
                 TypeError,  # type isn't a valid numpy type

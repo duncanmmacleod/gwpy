@@ -71,7 +71,7 @@ TEST_OMEGA_FILE = TEST_DATA_PATH / "omega.txt"
 class TestTable(Generic[TableType]):
     """Tests modifications/extensions to `astropy.table.Table`."""
 
-    TABLE: type[TableType] = Table  # type: ignore[assignment]
+    TABLE: type[TableType] = Table
 
     @classmethod
     def create(cls, n, names, dtypes=None) -> TableType:
@@ -111,7 +111,7 @@ class TestTable(Generic[TableType]):
 class TestEventTable(TestTable[EventTableType]):
     """Tests for `EventTable`."""
 
-    TABLE: type[EventTableType] = EventTable  # type: ignore[assignment]
+    TABLE: type[EventTableType] = EventTable
 
     def test_get_time_column(self, table: EventTableType):
         """Test that `_get_time_column` works on name."""
@@ -285,10 +285,10 @@ class TestEventTable(TestTable[EventTableType]):
         )
         assert isinstance(rates, TimeSeriesDict)
         assert list(rates.keys()), [10, 100]
-        assert rates[10].max() == 0.16 * units.Hz   # type: ignore[index]
-        assert rates[10].name == "snr >= 10"        # type: ignore[index]
-        assert rates[100].max() == 0.15 * units.Hz  # type: ignore[index]
-        assert rates[100].name == "snr >= 100"      # type: ignore[index]
+        assert rates[10].max() == 0.16 * units.Hz
+        assert rates[10].name == "snr >= 10"
+        assert rates[100].max() == 0.15 * units.Hz
+        assert rates[100].name == "snr >= 100"
         table.binned_event_rates(100, "snr", [10, 100], operator="in")
         table.binned_event_rates(100, "snr", [(0, 10), (10, 100)])
 

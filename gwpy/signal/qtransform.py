@@ -628,8 +628,8 @@ class QGram:
 
     def interpolate(
         self,
-        tres: float | None | str = "<default>",
-        fres: float | None | str = "<default>",
+        tres: float | str | None = "<default>",
+        fres: float | str | None = "<default>",
         *,
         logf: bool = False,
         outseg: Segment | None = None,

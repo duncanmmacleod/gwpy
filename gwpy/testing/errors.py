@@ -86,7 +86,7 @@ def pytest_skip_network_error(
             return func(*args, **kwargs)
         except* NETWORK_ERROR as exc:  # pragma: no cover
             if not exc.message and len(exc.exceptions) == 1:
-                exc = exc.exceptions[0]  # type: ignore[assignment]
+                exc = exc.exceptions[0]
             pytest.skip(str(exc))
         except* requests.exceptions.HTTPError as exc:  # pragma: no cover
             for error in exc.exceptions:
