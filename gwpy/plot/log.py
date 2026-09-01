@@ -41,6 +41,7 @@ from matplotlib.scale import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import Literal
 
     from matplotlib.axis import Axis
     from numpy.typing import NDArray
@@ -182,7 +183,7 @@ class LogScale(_LogScale):
         *,
         base: float = 10,
         subs: Sequence[int] | None = None,
-        nonpositive: str = "clip",
+        nonpositive: Literal["clip", "mask"] = "clip",
     ) -> None:
         """Initialise this `LogScale`.
 
