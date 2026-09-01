@@ -86,7 +86,7 @@ if TYPE_CHECKING:
 
     from ...time import SupportsToGps
 
-    T = TypeVar("T", bound=TimeSeriesBase)
+    TimeSeriesType = TypeVar("TimeSeriesType", bound=TimeSeriesBase)
 
 
 KHZ_4 = 4096
@@ -185,12 +185,12 @@ def _parse_bits_from_gwf_unit(series: StateVector) -> None:
 def _fetch_gwosc_data_file(
     url: str,
     *args: str | None,
-    series_class: type[TimeSeriesBase] = TimeSeries,
+    series_class: type[TimeSeriesType] = TimeSeries,
     cache: bool | None = None,
     timeout: float | None = None,
     format: str | None = None,  # noqa: A002
     **kwargs,
-) -> TimeSeriesBase:
+) -> TimeSeriesType:
     """Fetch a single GWOSC file and return a `Series`."""
     # Match file format
     ext = _get_file_extension(url)
@@ -297,9 +297,9 @@ def _fetch_gwosc_dataset(
     sample_rate: int,
     format: str,  # noqa: A002
     host: str,
-    series_class: type[T],
+    series_class: type[TimeSeriesType],
     **kwargs,
-) -> T:
+) -> TimeSeriesType:
     """Fetch and read GWOSC data for a single named dataset.
 
     This queries GWOSC for the URLs relevant to ``dataset`` and reads
@@ -374,11 +374,11 @@ def fetch_gwosc_data(
     sample_rate: int = 4096,
     format: str = "hdf5",
     host: str = DEFAULT_GWOSC_URL,
-    series_class: type[T] = TimeSeries,
+    series_class: type[TimeSeriesType] = TimeSeries,
     *,
     verbose: bool | None = None,
     **kwargs,
-) -> T:
+) -> TimeSeriesType:
     """Fetch open-access data from GWOSC.
 
     Parameters
@@ -549,9 +549,9 @@ def fetch_dict(
     format: str = "hdf5",
     host: str = DEFAULT_GWOSC_URL,
     parallel: int = NUM_THREADS,
-    series_class: type[T] = TimeSeries,
+    series_class: type[TimeSeriesType] = TimeSeries,
     **kwargs,
-) -> dict[str | Channel, T]:
+) -> dict[str | Channel, TimeSeriesType]:
     """Fetch open-access data from GWOSC for multiple detectors.
 
     Parameters
@@ -730,7 +730,7 @@ def read_gwosc_hdf5(
 
 @io_hdf5.with_read_hdf5
 def read_gwosc_hdf5_state(
-    f: str | h5py.HLObject,
+    f: h5py.Group | h5py.Dataset,
     path: str = "quality/simple",
     start: SupportsToGps | None = None,
     end: SupportsToGps | None = None,
@@ -743,31 +743,31 @@ def read_gwosc_hdf5_state(
 
     Parameters
     ----------
-    f : `str`, `h5py.HLObject`
-        path of HDF5 file, or open `H5File`
+    f : `str`, `h5py.Group`, `h5py.Dataset`
+        Path of HDF5 file, or open HDF5 file, group, or dataset.
 
     path : `str`
-        path of HDF5 datasets to read (will be used as name of the dataset).
+        Path of HDF5 datasets to read (will be used as name of the dataset).
 
     start : `Time`, `~gwpy.time.LIGOTimeGPS`, optional
-        start GPS time of desired data
+        Start GPS time of desired data.
 
     end : `Time`, `~gwpy.time.LIGOTimeGPS`, optional
-        end GPS time of desired data
+        End GPS time of desired data.
 
     copy : `bool`, default: `False`
-        create a fresh-memory copy of the underlying array
+        Create a fresh-memory copy of the underlying array.
 
     value_dataset : `str`
-        HDF5 dataset where to read the statevector values
+        HDF5 dataset where to read the statevector values.
 
     bits_dataset : `str`
-        HDF5 dataset where to read the definition of each bits
+        HDF5 dataset where to read the definition of each bits.
 
     Returns
     -------
     data : `~gwpy.timeseries.StateVector`
-        a new `StateVector` containing the data read from disk
+        A new `StateVector` containing the data read from disk.
     """
     # find data
     bits_ds = io_hdf5.find_dataset(f, f"{path}/{value_dataset}")
@@ -786,6 +786,12 @@ def read_gwosc_hdf5_state(
         dt = Quantity(dt, xunit)
     # Name
     name = _name_from_gwosc_hdf5(bits_ds)
+
+    # Cast to StateVector and crop
+    if start is not None:
+        start = to_gps(start)
+    if end is not None:
+        end = to_gps(end)
     return StateVector(
         bits,
         bits=bit_def,
