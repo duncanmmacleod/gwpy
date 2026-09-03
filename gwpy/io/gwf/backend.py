@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import importlib
+import logging
 import os
 from typing import TYPE_CHECKING
 
@@ -43,22 +44,28 @@ __all__ = [
     "import_backend",
 ]
 
-# Preferentially ordered list of supported GWF backends
+log = logging.getLogger(__name__)
+
+#: Preferentially ordered list of supported GWF backends
 BACKENDS = [
     "frameCPP",
     "LALFrame",
 ]
 
+#: Default package
+PACKAGE = __package__ or "gwpy.io.gwf"
+
 
 def _backend_candidates(
     backends: list[str] = BACKENDS,
 ) -> Iterator[str]:
+    """Yield potential GWF backends in preferential order."""
     default = os.getenv("GWPY_FRAME_LIBRARY") or backends[0]
-    yield from dict.fromkeys([default, *backends])
+    yield from dict.fromkeys((default, *backends))
 
 
 def get_backend(
-    package: str = __package__,
+    package: str = PACKAGE,
     backends: list[str] = BACKENDS,
 ) -> str:
     """Return the preferred GWF backend.
@@ -124,9 +131,9 @@ def get_backend(
 
 def import_backend(
     library: str,
-    package: str = __package__,
+    package: str = PACKAGE,
 ) -> ModuleType:
-    """Utility method to import the relevant GWF I/O backend.
+    """Import the relevant GWF I/O backend.
 
     This is just a wrapper around :meth:`importlib.import_module` with
     a slightly nicer error message.
@@ -145,7 +152,7 @@ def get_backend_function(
     name: str,
     backend: str | None = None,
     backends: list[str] = BACKENDS,
-    package: str = __package__,
+    package: str = PACKAGE,
 ) -> FunctionType:
     """Return the backend implementation of the function of the given name.
 
@@ -173,7 +180,7 @@ def get_backend_function(
     for bck in backends_to_try:
         try:
             mod = import_backend(bck, package=package)
-            return getattr(mod, name)
+            func = getattr(mod, name)
         except ImportError:  # module not installed
             if backend:
                 raise
@@ -183,6 +190,8 @@ def get_backend_function(
                 msg = f"GWF backend '{backend}' does not implement '{name}'"
                 raise NotImplementedError(msg) from exc
             continue
+        log.debug("Using GWF backend '%s' for function '%s'", bck, name)
+        return func
     # Try and import any backend to see if anything is actually available
     get_backend(package=package, backends=backends)
     # Otherwise we know that the requested function is not implemented

@@ -1246,8 +1246,8 @@ class Series(Array):
 
     def crop(
         self,
-        start: Quantity | float | None = None,
-        end: Quantity | float | None = None,
+        start: QuantityLike | None = None,
+        end: QuantityLike | None = None,
         *,
         copy: bool = False,
     ) -> Self:
@@ -1255,11 +1255,11 @@ class Series(Array):
 
         Parameters
         ----------
-        start : `float`, optional
+        start : `float`, `~astropy.units.Quantity`, optional
             Lower limit of x-axis to crop to, defaults to
             :attr:`~Series.x0`.
 
-        end : `float`, optional
+        end : `float`, `~astropy.units.Quantity`, optional
             Upper limit of x-axis to crop to, defaults to series end.
 
         copy : `bool`, optional
