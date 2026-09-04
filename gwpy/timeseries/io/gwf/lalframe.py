@@ -270,6 +270,7 @@ def write(
     outfile: str | Path | IO,
     start: LIGOTimeGPS,
     end: LIGOTimeGPS,
+    frame_duration: float | None = None,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -296,6 +297,13 @@ def write(
             stacklevel=2,
         )
 
+    # LALFrame also doesn't support splitting data between multiple frames
+    if frame_duration:
+        warnings.warn(
+            "LALFrame backend does not support splitting data between multiple "
+            "frames, frame_duration value will be ignored",
+            stacklevel=2,
+        )
 
     # create new frame
     frame = io_gwf_lalframe.create_frame(

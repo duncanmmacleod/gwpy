@@ -42,7 +42,10 @@ from ... import (
     TimeSeriesBaseList,
 )
 from ...core import _dynamic_scaled
-from .utils import _channel_dict_kwarg
+from .utils import (
+    _channel_dict_kwarg,
+    _frame_segments,
+)
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -561,6 +564,7 @@ def write(
     outfile: str | Path | IO,
     start: LIGOTimeGPS,
     end: LIGOTimeGPS,
+    frame_duration: float | None = None,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -568,7 +572,6 @@ def write(
     compression_level: int | None = None,
 ) -> None:
     """Write data to a GWF file using the frameCPP API."""
-    duration = end - start
     ifos = {
         ts.channel.ifo for ts in tsdict.values() if (
             ts.channel
@@ -577,37 +580,44 @@ def write(
         )
     }
 
-    # create frame
-    frame = io_framecpp.create_frame(
-        time=start,
-        duration=duration,
-        name=name or "gwpy",
-        run=run,
-        ifos=ifos,
-    )
+    frames = []
+    for seg in _frame_segments(start, end, frame_duration):
+        fstart, fend = seg
 
-    # append channels
-    for i, key in enumerate(tsdict):
-        ctype = (
-            type
-            or getattr(tsdict[key].channel, "_ctype", "proc").lower()
-            or "proc"
-        )
-        if ctype == "adc":
-            kw = {"channelid": i}
-        else:
-            kw = {}
-        _append_to_frame(
-            frame,
-            tsdict[key].crop(start, end),
-            ctype=ctype,
-            **kw,
+        # create frame
+        frame = io_framecpp.create_frame(
+            time=fstart,
+            duration=abs(seg),
+            name=name or "gwpy",
+            run=run,
+            ifos=ifos,
         )
 
-    # write frame to file
+        # append channels
+        for i, key in enumerate(tsdict):
+            ctype = (
+                type
+                or getattr(tsdict[key].channel, "_ctype", "proc").lower()
+                or "proc"
+            )
+            if ctype == "adc":
+                kw = {"channelid": i}
+            else:
+                kw = {}
+            _append_to_frame(
+                frame,
+                tsdict[key].crop(fstart, fend),
+                ctype=ctype,
+                **kw,
+            )
+
+        # add frame to list of frames
+        frames.append(frame)
+
+    # write frames to file
     io_framecpp.write_frames(
         outfile,
-        [frame],
+        frames,
         compression=compression,
         compression_level=compression_level,
     )

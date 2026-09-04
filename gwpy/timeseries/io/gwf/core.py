@@ -409,6 +409,7 @@ def write_timeseriesdict(
     target: str | Path | IO,
     start: SupportsToGps | None = None,
     end: SupportsToGps | None = None,
+    frame_duration: float | None = None,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -435,6 +436,12 @@ def write_timeseriesdict(
     end : `~gwpy.time.LIGOTimeGPS`, `float`, `str`, optional
         The GPS end time of the output ``FrameH``.
         Used with ``start`` to set the ``Dt`` attribute.
+
+    frame_duration : `~gwpy.time.LIGOTimeGPS`, `float`, `str`, optional
+        The duration of each ``FrameH`` structure in the produced
+        output file.
+        Default is the duration of the time series, such that the output
+        file contains one ``FrameH`` structure.
 
     type : `str`, optional
         The type of the channel, one of 'adc', 'proc', 'sim'.
@@ -533,6 +540,7 @@ def write_timeseriesdict(
         target,
         startgps,
         endgps,
+        frame_duration=frame_duration,
         type=type,
         name=name,
         run=run,
@@ -546,6 +554,7 @@ def write_timeseries(
     target: str | Path | IO,
     start: SupportsToGps | None = None,
     end: SupportsToGps | None = None,
+    frame_duration: float | None = None,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -572,6 +581,12 @@ def write_timeseries(
     end : `~gwpy.time.LIGOTimeGPS`, `float`, `str`, optional
         The GPS end time of the output ``FrameH``.
         Used with ``start`` to set the ``Dt`` attribute.
+
+    frame_duration : `~gwpy.time.LIGOTimeGPS`, `float`, `str`, optional
+        The duration of each ``FrameH`` structure in the produced
+        output file.
+        Default is the duration of the time series, such that the output
+        file contains one ``FrameH`` structure.
 
     type : `str`, optional
         The type of the channel, one of 'adc', 'proc', 'sim'.
@@ -634,6 +649,7 @@ def write_timeseries(
         target=target,
         start=start,
         end=end,
+        frame_duration=frame_duration,
         type=type,
         name=name,
         run=run,

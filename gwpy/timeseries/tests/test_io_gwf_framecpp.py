@@ -22,7 +22,11 @@ import numpy
 import pytest
 
 from ...detector import Channel
-from ...testing.utils import assert_quantity_sub_equal
+from ...segments import Segment
+from ...testing.utils import (
+    assert_quantity_sub_equal,
+    assert_segmentlist_equal,
+)
 from ...timeseries import TimeSeries
 
 pytest.importorskip("LDAStools.frameCPP")
@@ -78,3 +82,26 @@ def test_read_write_frvect_name(tmp_path):
     data.write(tmp, format="gwf", backend="framecpp", type="proc")
     new = type(data).read(tmp, "test")
     assert_quantity_sub_equal(data, new, exclude=("channel",))
+
+
+def test_write_multiple_frames(int32ts, tmp_path):
+    """Test use of multiple frames in one frame file."""
+    from LDAStools import frameCPP
+
+    from gwpy.timeseries.io.gwf.framecpp import get_toc_segments
+
+    # Write some test data with multiple frames
+    tmp = tmp_path / "test.gwf"
+    int32ts.write(tmp, format="gwf", backend="framecpp", frame_duration=6)
+
+    # Read the frames back in and check that we get the expected number of frames
+    stream = frameCPP.IFrameFStream(str(tmp))
+    framesegments = get_toc_segments(stream.GetTOC())
+    assert_segmentlist_equal(
+        framesegments,
+        [Segment(0, 6), Segment(6, 10)],
+    )
+
+    # Check that the data match
+    new = type(int32ts).read(tmp, "test", format="gwf")
+    assert_quantity_sub_equal(int32ts, new)

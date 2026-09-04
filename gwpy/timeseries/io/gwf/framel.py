@@ -196,6 +196,7 @@ def write(
     outfile: str | Path | IO,
     start: LIGOTimeGPS,
     end: LIGOTimeGPS,
+    frame_duration: float | None = None,
     type: str | None = None,
     name: str | None = None,
     run: int = 0,
@@ -226,6 +227,14 @@ def write(
         warnings.warn(
             "python-framel only supports GZIP level 1",
             stacklevel=1,
+        )
+
+    # FrameL (Python) doesn't support splitting data between multiple frames
+    if frame_duration:
+        warnings.warn(
+            "FrameL backend does not support splitting data between multiple "
+            "frames, frame_duration value will be ignored",
+            stacklevel=2,
         )
 
     # format and crop each series

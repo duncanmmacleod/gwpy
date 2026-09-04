@@ -395,6 +395,9 @@ allow-star-arg-any = true
 combine-as-imports = true
 force-wrap-aliases = true
 # packages that we provide typings for:
+known-first-party = [
+  "gwpy",
+]
 known-third-party = [
   "lal",
   "lalframe",
