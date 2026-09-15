@@ -217,20 +217,22 @@ class TestTimeSeries(_TestTimeSeriesBase[TimeSeriesType]):
     # -- fixtures --------------------
 
     @pytest.fixture(scope="class")
+    @classmethod
     @pytest_skip_network_error
-    def gw150914(self) -> TimeSeriesType:
+    def gw150914(cls) -> TimeSeriesType:
         """TimeSeries containing GW150914 data from GWOSC at 4096 Hz."""
-        return self.TEST_CLASS.get(
+        return cls.TEST_CLASS.get(
             GWOSC_GW150914_IFO,
             *GWOSC_GW150914_SEGMENT,
             sample_rate=4096,
         )
 
     @pytest.fixture(scope="class")
+    @classmethod
     @pytest_skip_network_error
-    def gw150914_16384(self) -> TimeSeriesType:
+    def gw150914_16384(cls) -> TimeSeriesType:
         """TimeSeries containing GW150914 data from GWOSC at 16384 Hz."""
-        return self.TEST_CLASS.get(
+        return cls.TEST_CLASS.get(
             GWOSC_GW150914_IFO,
             GWOSC_GW150914_SEGMENT.start,
             GWOSC_GW150914_SEGMENT.end,
@@ -238,10 +240,11 @@ class TestTimeSeries(_TestTimeSeriesBase[TimeSeriesType]):
         )
 
     @pytest.fixture(scope="class")
+    @classmethod
     @pytest_skip_network_error
-    def gw150914_h1_32(self) -> TimeSeriesType:
+    def gw150914_h1_32(cls) -> TimeSeriesType:
         """TimeSeries containing 32-seconds of H1 GW150914 data from GWOSC."""
-        return self.TEST_CLASS.get(
+        return cls.TEST_CLASS.get(
             "H1",
             GWOSC_GW150914_SEGMENT_32.start,
             GWOSC_GW150914_SEGMENT_32.end,
@@ -250,10 +253,11 @@ class TestTimeSeries(_TestTimeSeriesBase[TimeSeriesType]):
         )
 
     @pytest.fixture(scope="class")
+    @classmethod
     @pytest_skip_network_error
-    def gw150914_l1_32(self) -> TimeSeriesType:
+    def gw150914_l1_32(cls) -> TimeSeriesType:
         """TimeSeries containing 32-seconds of L1 GW150914 data from GWOSC."""
-        return self.TEST_CLASS.get(
+        return cls.TEST_CLASS.get(
             "L1",
             GWOSC_GW150914_SEGMENT_32.start,
             GWOSC_GW150914_SEGMENT_32.end,
@@ -1105,10 +1109,10 @@ class TestTimeSeries(_TestTimeSeriesBase[TimeSeriesType]):
         assert fs.name == noisy_sinusoid.name
         assert fs.channel is noisy_sinusoid.channel
 
-    @pytest.mark.parametrize(("library", "method"), chain(
+    @pytest.mark.parametrize(("library", "method"), list(chain(
         product(["pycbc.psd"], ["welch", "bartlett", "median", "median_mean"]),
         product(["lal"], ["welch", "bartlett", "median", "median_mean"]),
-    ))
+    )))
     def test_psd_deprecated(self, noisy_sinusoid, library, method):
         """Test deprecated average methods for TimeSeries.psd."""
         pytest.importorskip(library)

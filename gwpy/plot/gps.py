@@ -1,5 +1,5 @@
 # Copyright (c) 2014-2017 Louisiana State University
-#               2017-2025 Cardiff University
+#               2017-2026 Cardiff University
 #
 # This file is part of GWpy.
 #
@@ -22,10 +22,15 @@ from __future__ import annotations
 
 import contextlib
 from decimal import Decimal
+from math import (
+    ceil,
+    floor,
+)
 from numbers import Number
 from typing import (
     TYPE_CHECKING,
     cast,
+    overload,
 )
 
 import numpy
@@ -33,7 +38,6 @@ from astropy import units
 from matplotlib import ticker
 from matplotlib.scale import (
     LinearScale,
-    _get_scale_docs as get_scale_docs,
     get_scale_names,
     register_scale,
 )
@@ -41,8 +45,11 @@ from matplotlib.transforms import Transform
 
 try:
     from matplotlib import _docstring
-except ImportError:  # maybe matplotlib >= 3.9?
-    _docstring = None
+    from matplotlib.scale import _get_scale_docs
+except ImportError:  # maybe matplotlib >= 3.12?
+    HAVE_DOCSTRING = False
+else:
+    HAVE_DOCSTRING = True
 
 from ..time import (
     from_gps,
@@ -52,16 +59,19 @@ from ..time import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import (
-        Any,
         Literal,
+        SupportsFloat,
+        TypeVar,
     )
 
-    from astropy.units import UnitBase
+    from astropy.units import NamedUnit
     from matplotlib.axis import Axis
     from numpy.typing import ArrayLike
 
     from ..time import SupportsToGps
     from ..typing import UnitLike
+
+    NumericType = TypeVar("NumericType", bound=SupportsFloat)
 
 __author__ = "Duncan Macleod <duncan.macleod@ligo.org>"
 
@@ -87,7 +97,7 @@ TIME_UNITS = (
 GPS_SCALES = {}
 
 
-def _truncate(f: float, n: int) -> str:
+def _truncate(f: SupportsFloat, n: int) -> str:
     """Truncates/pads a float `f` to `n` decimal places without rounding.
 
     From https://stackoverflow.com/a/783927/1307974 (CC-BY-SA)
@@ -95,7 +105,7 @@ def _truncate(f: float, n: int) -> str:
     s = str(f)
     if "e" in s or "E" in s:
         return f"{f:.{n}f}"
-    i, p, d = s.partition(".")
+    i, _, d = s.partition(".")
     return ".".join([i, (d+"0"*n)[:n]])
 
 
@@ -107,8 +117,8 @@ class GPSMixin:
     def __init__(
         self,
         *args,
-        unit: UnitBase | None = None,
-        epoch: Number | Decimal | SupportsToGps | None = None,
+        unit: NamedUnit | str | None = None,
+        epoch: SupportsToGps | None = None,
         **kwargs,
     ) -> None:
         """Initialise a new GPS-scaled object."""
@@ -123,7 +133,7 @@ class GPSMixin:
         """Return the GPS epoch."""
         return self._epoch
 
-    def set_epoch(self, epoch: Number | Decimal | SupportsToGps | None) -> None:
+    def set_epoch(self, epoch: SupportsToGps | None) -> None:
         """Set the GPS epoch."""
         if epoch is None:
             self._epoch = None
@@ -136,7 +146,7 @@ class GPSMixin:
         doc=get_epoch.__doc__,
     )
 
-    def get_unit(self) -> UnitBase | None:
+    def get_unit(self) -> NamedUnit | None:
         """GPS step scale."""
         return self._unit
 
@@ -150,9 +160,11 @@ class GPSMixin:
             self._unit = unit
             return
 
+        second: NamedUnit = units.second
+
         # convert float to custom unit in seconds
         if isinstance(unit, Number):
-            unit = units.Unit(unit * units.second)
+            unit = units.Unit(unit * second)
 
         # otherwise, should be able to convert to a time unit
         try:
@@ -160,11 +172,10 @@ class GPSMixin:
         except ValueError:
             # catch annoying plurals
             unit = units.Unit(str(unit).rstrip("s"))
-        unit = cast("UnitBase", unit)
 
         # decompose and check that it's actually a time unit
         dec = unit.decompose()
-        if dec.bases != [units.second]:
+        if dec.bases != [second]:
             msg = f"cannot set GPS unit to '{unit}'"
             raise ValueError(msg)
 
@@ -188,12 +199,13 @@ class GPSMixin:
 
         Note that this returns a simply-pluralised version of the name.
         """
-        if not self.unit:
+        unit: NamedUnit | None = self.get_unit()
+        if not unit:
             return None
         try:
-            name = self.unit.long_names[0]
+            name = unit.long_names[0]
         except IndexError:
-            name = self.unit.name
+            name = unit.name
         if len(name) > 1:
             return name + "s"  # pluralise for humans
         return name
@@ -202,7 +214,7 @@ class GPSMixin:
         """Return the scale (in seconds) of the current GPS unit."""
         if self.unit is None:
             return 1
-        return self.unit.decompose().scale
+        return cast("float", self.unit.decompose().scale)
 
     scale = property(fget=get_scale, doc=get_scale.__doc__)
 
@@ -229,11 +241,13 @@ class _GPSTransformBase(GPSMixin, Transform):
     def transform(self, values: ArrayLike) -> numpy.ndarray:
         """Transform an array of GPS times."""
         # format ticks using decimal for precision display
-        if isinstance(values, Number | Decimal):
-            return self._transform_decimal(values, self.epoch or 0, self.scale)
+        if isinstance(values, float | Decimal):
+            return numpy.asanyarray(
+                self._transform_decimal(values, self.epoch or 0, self.scale),
+            )
         return super().transform(values)
 
-    def transform_non_affine(self, values: ArrayLike) -> numpy.ndarray:
+    def transform_non_affine(self, values: ArrayLike) -> ArrayLike:
         """Transform an array of GPS times.
 
         This method is designed to filter out transformations that will
@@ -268,12 +282,19 @@ class _GPSTransformBase(GPSMixin, Transform):
             count=flat.size,
         ).reshape(values.shape)
 
+    @overload
+    @staticmethod
+    def _transform(value: ArrayLike, epoch: float, scale: float) -> ArrayLike: ...
+    @overload
+    @staticmethod
+    def _transform(value: Decimal, epoch: Decimal, scale: Decimal) -> Decimal: ...
+
     @staticmethod
     def _transform(
-        value: numpy.ndarray,
-        epoch: float,
-        scale: float,
-    ) -> numpy.ndarray:
+        value: ArrayLike | Decimal,
+        epoch: float | Decimal,
+        scale: float | Decimal,
+    ) -> ArrayLike | Decimal:
         """Transform the GPS ``value`` into a scaled time relative to an epoch."""
         # convert GPS into scaled time from epoch
         return (value - epoch) / scale
@@ -281,10 +302,10 @@ class _GPSTransformBase(GPSMixin, Transform):
     @classmethod
     def _transform_decimal(
         cls,
-        value: float,
-        epoch: float,
-        scale: float,
-    ) -> float:
+        value: NumericType,
+        epoch: SupportsFloat,
+        scale: SupportsFloat,
+    ) -> NumericType:
         """Transform to/from GPS using `decimal.Decimal` for precision."""
         vdec = Decimal(_truncate(value, 12))
         edec = Decimal(_truncate(epoch, 12))
@@ -303,12 +324,19 @@ class GPSTransform(_GPSTransformBase):
 class InvertedGPSTransform(_GPSTransformBase):
     """Transform time (scaled units) from epoch into GPS time."""
 
+    @overload
+    @staticmethod
+    def _transform(value: ArrayLike, epoch: float, scale: float) -> ArrayLike: ...
+    @overload
+    @staticmethod
+    def _transform(value: Decimal, epoch: Decimal, scale: Decimal) -> Decimal: ...
+
     @staticmethod
     def _transform(
-        value: numpy.ndarray,
-        epoch: float,
-        scale: float,
-    ) -> numpy.ndarray:
+        value: ArrayLike | Decimal,
+        epoch: float | Decimal,
+        scale: float | Decimal,
+    ) -> ArrayLike | Decimal:
         """Transform the scaled time back into GPS."""
         return value * scale + epoch
 
@@ -346,6 +374,9 @@ class GPSAutoLocator(ticker.MaxNLocator):
         """Generate the list of tick values for the given interval."""
         self.axis: Axis
         transform = self.axis.get_transform()
+        if not isinstance(transform, GPSTransform):
+            msg = "GPSAutoLocator can only be used with a GPSTransform"
+            raise TypeError(msg)
         unit = transform.get_unit()
         steps = self._steps
 
@@ -374,7 +405,7 @@ class GPSAutoMinorLocator(ticker.AutoMinorLocator):
     def __call__(self) -> Sequence[float]:
         """Return the locations of the ticks."""
         self.axis: Axis
-        majorlocs = self.axis.get_majorticklocs()
+        majorlocs: numpy.ndarray = self.axis.get_majorticklocs()
         trans = self.axis.get_transform()
         try:
             majorstep = majorlocs[1] - majorlocs[0]
@@ -406,21 +437,21 @@ class GPSAutoMinorLocator(ticker.AutoMinorLocator):
 
         minorstep = majorstep / ndivs
 
-        vmin, vmax = self.axis.get_view_interval()
+        vmin, vmax = cast("tuple[float, float]", self.axis.get_view_interval())
         if vmin > vmax:
             vmin, vmax = vmax, vmin
 
         if numpy.size(majorlocs):
             epoch = majorlocs[0]
-            tmin = numpy.floor((vmin - epoch) / minorstep) * minorstep
-            tmax = numpy.ceil((vmax - epoch) / minorstep) * minorstep
+            tmin = floor((vmin - epoch) / minorstep) * minorstep
+            tmax = ceil((vmax - epoch) / minorstep) * minorstep
             locs = numpy.arange(tmin, tmax, minorstep) + epoch
             cond = numpy.abs((locs - epoch) % majorstep) > minorstep / 10.0
             locs = locs.compress(cond)
         else:
             locs = []
 
-        return self.raise_if_exceeds(numpy.array(locs))
+        return self.raise_if_exceeds(locs)
 
 
 class GPSFormatter(ticker.Formatter):
@@ -428,12 +459,12 @@ class GPSFormatter(ticker.Formatter):
 
     def __call__(
         self,
-        t: float,
+        x: float,
         pos: int | None = None,  # noqa: ARG002
     ) -> str:
         """Format a tick on this scale."""
         trans = self.axis.get_transform()
-        flt = float(trans.transform(float(t)))
+        flt = float(trans.transform(float(x)))
         if flt.is_integer():
             return str(int(flt))
         return str(flt)
@@ -446,34 +477,79 @@ class GPSScale(GPSMixin, LinearScale):
 
     Parameters
     ----------
-    axis : `matplotlib.axis.Axis`.
-        The axis to scale.
-
     unit : `astropy.units.Unit`, optional
         The unit to use for ticks on the axis.
 
     epoch : `float`, `gwpy.time.LIGOTimeGPS`, optional
         The GPS epoch (origin) for axis ticks.
+
+    Notes
+    -----
+    Unlike most matplotlib scales, `GPSScale` is deliberately not
+    axis-agnostic: when ``unit``/``epoch`` are not set explicitly,
+    `get_transform` re-derives them on every call from the axis bound
+    via `set_axis`/`set_default_locators_and_formatters`, using its
+    current data/view limits -- both so the displayed unit adapts as
+    data changes or the view is zoomed, and so GPS times (up to 19
+    significant digits) are rescaled near a nearby epoch before being
+    handed to matplotlib's float-based rendering pipeline. This
+    mirrors the ``axis``/``set_axis()`` convention used by
+    `matplotlib.ticker.TickHelper` (the base of
+    `~matplotlib.ticker.Locator`/`~matplotlib.ticker.Formatter`,
+    including `GPSAutoLocator`/`GPSFormatter` below) -- the standard
+    matplotlib idiom for helper objects needing a live per-axis
+    reference established after construction, rather than the
+    constructor-time ``axis`` parameter matplotlib >= 3.11 pending-
+    deprecates. Unlike `TickHelper.create_dummy_axis`, `GPSScale` does
+    not silently fall back to a dummy axis when unbound: its
+    `get_transform` output feeds `Axes.transData` directly, so a
+    missing axis fails loudly rather than silently producing a
+    plausible-looking but numerically wrong transform.
     """
 
     name = "auto-gps"
     Transform = GPSTransform
     InvertedTransform = InvertedGPSTransform
 
+    #: Default for `axis` before `set_axis` is first called. Assigning
+    #: ``self.axis = ...`` (in `set_axis`, below) always creates a
+    #: per-instance attribute that shadows this class-level default; it
+    #: is never mutated in place, so instances never share state through
+    #: it (mirrors `matplotlib.ticker.TickHelper.axis`).
+    axis: Axis | None = None
+
     def __init__(
         self,
-        axis: Axis,
-        unit: UnitBase | None = None,
-        epoch: Number | Decimal | SupportsToGps | None = None,
+        _axis: Axis | None = None,
+        *,
+        unit: NamedUnit | str | Number | None = None,
+        epoch: SupportsToGps | None = None,
     ) -> None:
-        """Initialise this `GPSScale`."""
+        """Initialise this `GPSScale`.
+
+        The leading positional argument is accepted only for
+        compatibility with matplotlib < 3.11, which always passes the
+        `~matplotlib.axis.Axis` to scale constructors positionally;
+        matplotlib >= 3.11 does not, and does not need to, since the
+        axis is bound separately via `set_axis`.
+        """
         super().__init__(unit=unit, epoch=epoch)
+        self.set_axis(_axis)
+
+    def set_axis(self, axis: Axis | None) -> None:
+        """Bind this scale to ``axis``.
+
+        Mirrors `matplotlib.ticker.TickHelper.set_axis`, the
+        convention matplotlib uses for helper objects that need a
+        live per-axis reference established after construction.
+        """
         self.axis = axis
-        # set tight scaling on parent axes
-        getattr(axis.axes, f"set_{axis.axis_name}margin")(0)
 
     def set_default_locators_and_formatters(self, axis: Axis) -> None:
         """Set the defualt locators and formatters for ``axis``."""
+        self.set_axis(axis)
+        # set tight scaling on parent axes
+        getattr(axis.axes, f"set_{axis._get_axis_name()}margin")(0)  # ty: ignore[unresolved-attribute]
         axis.set_major_locator(GPSAutoLocator())
         axis.set_major_formatter(GPSFormatter())
         axis.set_minor_locator(GPSAutoMinorLocator())
@@ -485,7 +561,7 @@ class GPSScale(GPSMixin, LinearScale):
         # if autoscaling and datalim is set, use it
         dlim = axis.get_data_interval()
         if (
-            getattr(axis.axes, f"get_autoscale{axis.axis_name}_on")()
+            getattr(axis.axes, f"get_autoscale{axis._get_axis_name()}_on")()  # ty: ignore[unresolved-attribute]
             and not numpy.isinf(dlim).any()
         ):
             return dlim
@@ -506,24 +582,26 @@ class GPSScale(GPSMixin, LinearScale):
             if unit < units.Unit(u):
                 break
             if u in ("day",):
-                date = date.replace(**{fields[i]: 1})
+                date = date.replace(**{fields[i]: 1})  # ty: ignore[invalid-argument-type]
             else:
-                date = date.replace(**{fields[i]: 0})
+                date = date.replace(**{fields[i]: 0})  # ty: ignore[invalid-argument-type]
         return int(to_gps(date))
 
-    def _auto_unit(self, axis: Axis) -> UnitBase:
+    def _auto_unit(self, axis: Axis) -> NamedUnit:
         """Find the best scaled unit for this ``axis``."""
         # get width of axis
         vmin, vmax = self._lim(axis)
         duration = vmax - vmin
 
+        second: NamedUnit = units.second
+
         # find time unit that fits the duration well;
         # the magic scaling of 4 or 0.01 is entirely arbitrary,
         # but in practice results in figures that scale nicely
         for scale in TIME_UNITS[::-1]:
-            base = scale.decompose().scale
+            base = cast("float", scale.decompose().scale)
             # for large durations, prefer smaller units
-            if scale > units.second:
+            if scale > second:
                 base *= 4
             # for smaller durations, prefer larger units
             else:
@@ -532,7 +610,25 @@ class GPSScale(GPSMixin, LinearScale):
                 return scale
 
         # if nothing else worked, just use seconds
-        return units.second
+        return second
+
+    def _require_axis(self) -> Axis:
+        """Return `axis`, raising if this scale is not yet attached.
+
+        Used to derive automatic unit/epoch values, which need a live
+        `~matplotlib.axis.Axis` to inspect -- see the class `Notes` for
+        why this fails loudly rather than degrading gracefully like
+        `matplotlib.ticker.TickHelper.create_dummy_axis`.
+        """
+        if self.axis is None:
+            msg = (
+                f"{type(self).__name__} is not attached to a matplotlib "
+                "Axis; call Axes.set_xscale()/set_yscale() (which binds "
+                "it via set_axis()) before relying on automatic "
+                "unit/epoch selection"
+            )
+            raise RuntimeError(msg)
+        return self.axis
 
     def get_transform(self) -> GPSTransform:
         """Return the `GPSTransform` associated with this scale."""
@@ -542,9 +638,9 @@ class GPSScale(GPSMixin, LinearScale):
 
         # dynamically set epoch and/or unit if None
         if unit is None:
-            self.set_unit(self._auto_unit(self.axis))
+            self.set_unit(self._auto_unit(self._require_axis()))
         if epoch is None:
-            self.set_epoch(self._auto_epoch(self.axis))
+            self.set_epoch(self._auto_epoch(self._require_axis()))
 
         # build transform on-the-fly
         try:
@@ -568,7 +664,7 @@ def register_gps_scale(scale_class: type[GPSScale]) -> None:
     GPS_SCALES[scale_class.name] = scale_class
 
 
-def _gps_scale_factory(unit: UnitBase) -> type[GPSScale]:
+def _gps_scale_factory(unit: NamedUnit) -> type[GPSScale]:
     """Construct a GPSScale for this unit."""
 
     class FixedGPSScale(GPSScale):
@@ -578,10 +674,11 @@ def _gps_scale_factory(unit: UnitBase) -> type[GPSScale]:
 
         def __init__(
             self,
-            axis: Axis,
-            epoch: Number | Decimal | SupportsToGps | None = None,
+            _axis: Axis | None = None,
+            *,
+            epoch: SupportsToGps | None = None,
         ) -> None:
-            super().__init__(axis, epoch=epoch, unit=unit)
+            super().__init__(_axis, epoch=epoch, unit=unit)
 
     return FixedGPSScale
 
@@ -595,8 +692,12 @@ for _unit in TIME_UNITS:
     register_gps_scale(_gps_scale_factory(_unit))
 
 # update the docstring for matplotlib scale methods
-with contextlib.suppress(AttributeError):
-    _docstring.interpd.params.update(
-        scale=" | ".join([repr(x) for x in get_scale_names()]),
-        scale_docs=get_scale_docs().rstrip(),
-    )
+if HAVE_DOCSTRING:
+    _docstring_interp_params = {
+        "scale": " | ".join([repr(x) for x in get_scale_names()]),
+        "scale_docs": _get_scale_docs().rstrip(),
+    }
+    try:
+        _docstring.interpd.register(**_docstring_interp_params)
+    except AttributeError:  # matplotlib < 3.10
+        _docstring.interpd.update(_docstring_interp_params)  # ty: ignore[unresolved-attribute]

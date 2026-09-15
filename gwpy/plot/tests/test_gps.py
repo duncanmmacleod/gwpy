@@ -1,5 +1,5 @@
 # Copyright (c) 2014-2017 Louisiana State University
-#               2018-2025 Cardiff University
+#               2018-2026 Cardiff University
 #
 # This file is part of GWpy.
 #
@@ -29,7 +29,7 @@ from ...time import LIGOTimeGPS
 from .. import gps as plot_gps
 
 
-class TestGPSMixin:
+class _TestGPSMixin:
     """Tests for `GPSMixin`."""
 
     TYPE = plot_gps.GPSMixin
@@ -45,43 +45,6 @@ class TestGPSMixin:
         m = self.TYPE(unit="second", epoch=100)
         assert m.unit is Unit("second")
         assert m.epoch == 100.
-
-    @pytest.mark.parametrize(("in_", "out"), [
-        pytest.param(
-            None,
-            None,
-            id="None",
-        ),
-        pytest.param(
-            1,
-            1.,
-            id="int",
-        ),
-        pytest.param(
-            "1",
-            1.,
-            id="str",
-        ),
-        pytest.param(
-            Decimal(12345),
-            12345.,
-            id="Decimal",
-        ),
-        pytest.param(
-            numpy.float32(56789),
-            56789.,
-            id="numpy.float",
-        ),
-        pytest.param(
-            LIGOTimeGPS(1234567890, 123000000),
-            1234567890.123,
-            id="LIGOTimeGPS",
-        ),
-    ])
-    def test_epoch(self, in_, out):
-        """Test `GPSMixin.epoch`."""
-        mix = self.TYPE(epoch=in_)
-        assert mix.epoch == out
 
     @pytest.mark.parametrize(("in_", "out"), [
         (None, None),
@@ -130,6 +93,49 @@ class TestGPSMixin:
         mix = self.TYPE(unit=unit)
         assert mix.get_unit_name() == name
 
+
+class TestGpsMixin(_TestGPSMixin):
+    """Tests for `GPSMixin`."""
+
+    TYPE = plot_gps.GPSMixin
+
+    @pytest.mark.parametrize(("in_", "out"), [
+        pytest.param(
+            None,
+            None,
+            id="None",
+        ),
+        pytest.param(
+            1,
+            1.,
+            id="int",
+        ),
+        pytest.param(
+            "1",
+            1.,
+            id="str",
+        ),
+        pytest.param(
+            Decimal(12345),
+            12345.,
+            id="Decimal",
+        ),
+        pytest.param(
+            numpy.float32(56789),
+            56789.,
+            id="numpy.float",
+        ),
+        pytest.param(
+            LIGOTimeGPS(1234567890, 123000000),
+            1234567890.123,
+            id="LIGOTimeGPS",
+        ),
+    ])
+    def test_epoch(self, in_, out):
+        """Test `GPSMixin.epoch`."""
+        mix = self.TYPE(epoch=in_)
+        assert mix.epoch == out
+
     @pytest.mark.parametrize(("unit", "scale"), [
         (None, 1),
         ("second", 1),
@@ -142,7 +148,7 @@ class TestGPSMixin:
         assert mix.scale == scale
 
 
-class TestGpsTransform(TestGPSMixin):
+class TestGpsTransform(_TestGPSMixin):
     """Tests for `GPSTransform`."""
 
     TRANSFORM = plot_gps.GPSTransform
@@ -212,7 +218,7 @@ def test_gps_scale(scale):
         x = numpy.arange(1e2)
     ax.plot(x * u.decompose().scale, x)
     fig.canvas.draw()
-    xscale = ax.get_xaxis()._scale
+    xscale = ax.get_xaxis()._scale  # ty: ignore[unresolved-attribute]
     assert xscale.get_unit() == Unit(scale[:-1])
     pyplot.close(fig)
 
@@ -235,12 +241,61 @@ def test_gps_scale(scale):
 def test_auto_gps_scale(scale, unit):
     """Test ``auto-gps`` scale in action."""
     fig = pyplot.figure()
-    ax = fig.add_subplot(xscale="auto-gps")
-    ax.plot(numpy.arange(1e2) * scale, numpy.arange(1e2))
-    xscale = ax.get_xaxis()._scale
-    transform = xscale.get_transform()
-    assert transform.unit.name == unit
-    pyplot.close(fig)
+    try:
+        ax = fig.add_subplot(xscale="auto-gps")
+        ax.plot(numpy.arange(1e2) * scale, numpy.arange(1e2))
+        xscale = ax.get_xaxis()._scale  # ty: ignore[unresolved-attribute]
+        transform = xscale.get_transform()
+        assert transform.unit.name == unit
+    finally:
+        pyplot.close(fig)
+
+
+def test_gps_scale_set_axis():
+    """Test that `GPSScale.set_axis` binds the axis directly."""
+    scale = plot_gps.GPSScale()
+    fig = pyplot.figure()
+    try:
+        ax = fig.add_subplot()
+        scale.set_axis(ax.xaxis)
+        assert scale.axis is ax.xaxis
+    finally:
+        pyplot.close(fig)
+
+
+def test_gps_scale_unbound_raises():
+    """Test that an unattached `GPSScale` fails loudly on auto unit/epoch."""
+    scale = plot_gps.GPSScale()
+    with pytest.raises(
+        RuntimeError,
+        match="not attached to a matplotlib Axis",
+    ):
+        scale.get_transform()
+
+
+def test_gps_scale_unbound_explicit_unit_epoch_ok():
+    """Test that explicit unit/epoch avoids needing a bound axis at all."""
+    scale = plot_gps.GPSScale(unit="second", epoch=0)
+    transform = scale.get_transform()
+    assert transform.unit == Unit("second")
+    assert transform.epoch == 0.0
+
+
+def test_gps_scale_rebind_axis():
+    """Test that `set_default_locators_and_formatters` rebinds `.axis`."""
+    scale = plot_gps.GPSScale()
+    fig1 = pyplot.figure()
+    fig2 = pyplot.figure()
+    try:
+        ax1 = fig1.add_subplot()
+        ax2 = fig2.add_subplot()
+        scale.set_default_locators_and_formatters(ax1.xaxis)
+        assert scale.axis is ax1.xaxis
+        scale.set_default_locators_and_formatters(ax2.xaxis)
+        assert scale.axis is ax2.xaxis
+    finally:
+        pyplot.close(fig1)
+        pyplot.close(fig2)
 
 
 def test_gps_formatting():

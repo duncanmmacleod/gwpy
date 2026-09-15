@@ -40,6 +40,9 @@ from matplotlib.scale import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from typing import Literal
+
     from matplotlib.axis import Axis
     from numpy.typing import NDArray
 
@@ -173,6 +176,23 @@ class LogScale(_LogScale):
     This scale overrides the default to use the new GWpy formatters
     for major and minor ticks.
     """
+
+    def __init__(
+        self,
+        _axis: Axis | None = None,
+        *,
+        base: float = 10,
+        subs: Sequence[int] | None = None,
+        nonpositive: Literal["clip", "mask"] = "clip",
+    ) -> None:
+        """Initialise this `LogScale`.
+
+        The leading positional argument is accepted only for
+        compatibility with matplotlib < 3.11, which always passes the
+        `~matplotlib.axis.Axis` to scale constructors positionally;
+        matplotlib >= 3.11 does not.
+        """
+        super().__init__(_axis, base=base, subs=subs, nonpositive=nonpositive)
 
     @wraps(_LogScale.set_default_locators_and_formatters)
     def set_default_locators_and_formatters(self, axis: Axis) -> None:
